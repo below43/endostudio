@@ -1,0 +1,7 @@
+{
+  "name": "endo-studio",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
