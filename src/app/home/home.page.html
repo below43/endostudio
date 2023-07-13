@@ -13,7 +13,7 @@
 					<ion-icon name="camera"></ion-icon>
 				</ion-button>
 				<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving">
-					<ion-icon name="ellipse" style="color:red"></ion-icon>
+					<ion-icon name="ellipse" style="color:red; font-size: 0.9em;"></ion-icon>
 				</ion-button>
 				<ion-button size="large" (click)="stopRecording()" *ngIf="recording">
 					<ion-icon name="stop" style="color:black"></ion-icon>
@@ -40,7 +40,7 @@
 				<!-- todo: Open media folder -->
 				<ion-item [button]="true" (click)="isSessionAlertOpen=true" [detail]="false"><ion-label>Set session name</ion-label></ion-item>
 				<ion-item [button]="true" id="settings-trigger" [detail]="true">Settings...</ion-item>
-				<ion-item [button]="true" href="about" [detail]="true"><ion-label>About</ion-label></ion-item>
+				<ion-item [button]="true" (click)="isAboutOpen=true"><ion-label>About</ion-label></ion-item>
 				<!-- settings menu -->
 				<ion-popover trigger="settings-trigger" [dismissOnSelect]="true" side="end">
 					<ng-template>
@@ -62,6 +62,19 @@
 <ion-content [fullscreen]="true" style="--background:black">
 	<!-- video element -->
 	<video #videoElement width="100%" height="100%"></video>
+
+	<!-- take photo button with white border and white icon -->
+	<ion-button class="touch-button" fill="clear" id="touch-take-photo" (click)="takePhoto()" [disabled]="recording || saving">
+		<ion-icon name="camera-outline" style="color:white"></ion-icon>
+	</ion-button>
+	<!-- start recording & stop recording buttons -->
+	<ion-button class="touch-button" fill="clear" id="touch-start-recording" (click)="startRecording()" *ngIf="!recording" [disabled]="saving">
+		<ion-icon name="ellipse" style="color:red"></ion-icon>
+	</ion-button>
+	<!-- stop recording -->
+	<ion-button class="touch-button" fill="clear" id="touch-stop-recording" (click)="stopRecording()" *ngIf="recording" [disabled]="saving">
+		<ion-icon name="stop" style="color:white"></ion-icon>
+	</ion-button>
 
 	<!-- screen shot -->
 	<canvas id="canvas" style="display:none"></canvas>
@@ -89,4 +102,27 @@
 </ion-content>
 
 <!-- session -->
-<ion-alert [isOpen]="isSessionAlertOpen" mode="md" (didDismiss)="isSessionAlertOpen = false" header="Session name" [buttons]="alertButtons" [inputs]="sessionAlertInputs" (didDismiss)="setSessionNameResult($event)" style="--max-width: 500px; --width: 500px"></ion-alert>
+<ion-alert [isOpen]="isSessionAlertOpen" mode="md" header="Session name" [buttons]="alertButtons" [inputs]="sessionAlertInputs" (didDismiss)="setSessionNameResult($event)" style="--max-width: 500px; --width: 500px"></ion-alert>
+
+<!-- about -->
+
+<ion-modal #modal [isOpen]="isAboutOpen" expand="block" mode="ios">
+	<ng-template>
+		<ion-header>
+			<ion-toolbar>
+				<ion-title>About</ion-title>
+				<ion-buttons slot="end">
+					<ion-button [strong]="true" (click)="modal.dismiss()">Close</ion-button>
+				</ion-buttons>
+			</ion-toolbar>
+		</ion-header>
+		<ion-content class="ion-padding">
+			<h1>EndoStudio</h1>
+			<p>EndoStudio is an app for viewing and recording video input from endoscopes and boroscopes.</p>
+			<p>Made by <a href="https://below43.nz" target="_blank">Below43.nz</a></p>
+			<p><a href="https://github.com/below43/endo-studio" target="_blank">More information</a></p>
+			<p>MIT License</p>
+			<p>&copy; Below 43 Ltd 2023</p>
+		</ion-content>
+	</ng-template>
+</ion-modal>

@@ -23,7 +23,8 @@ export class HomePage implements AfterViewInit
 
 	sessionAlertInputs: AlertInput[] | undefined;
 	isSessionAlertOpen: boolean = false;
-
+	isAboutOpen: boolean = false;
+	
 	ngAfterViewInit(): void
 	{
 		this.getDevices();
@@ -374,6 +375,7 @@ export class HomePage implements AfterViewInit
 
 	setSessionNameResult(ev: any)
 	{
+		this.isSessionAlertOpen = false;
 		console.log(ev);
 		if (ev.detail.role == 'cancel') return;
 		let session = ev.detail.data.values.session;
