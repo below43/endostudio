@@ -8,13 +8,10 @@
 			<ion-buttons slot="start">
 			</ion-buttons>
 			<ion-buttons slot="end">
-				<!-- <ion-button size="large" (click)="getDevices()" [disabled]="recording"><ion-icon name="camera-reverse-outline"></ion-icon></ion-button> -->
+				<!-- todo: full screen -->
 				<ion-button size="large" (click)="takePhoto()">
 					<ion-icon name="camera"></ion-icon>
 				</ion-button>
-				<!-- todo: full screen -->
-				<!-- todo: take photo -->
-				<!-- todo: record video -->
 				<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving">
 					<ion-icon name="ellipse" style="color:red"></ion-icon>
 				</ion-button>
@@ -35,11 +32,47 @@
 	</ion-toolbar>
 </ion-header>
 
+<!-- extended menu -->
+<ion-popover trigger="menu-popover-button" [dismissOnSelect]="true" size="auto">
+	<ng-template>
+		<ion-content>
+			<ion-list>
+				<!-- todo: Open media folder -->
+				<ion-item [button]="true" (click)="isSessionAlertOpen=true" [detail]="false"><ion-label>Set session name</ion-label></ion-item>
+				<ion-item [button]="true" id="settings-trigger" [detail]="true">Settings...</ion-item>
+				<ion-item [button]="true" href="about" [detail]="true"><ion-label>About</ion-label></ion-item>
+				<!-- settings menu -->
+				<ion-popover trigger="settings-trigger" [dismissOnSelect]="true" side="end">
+					<ng-template>
+						<ion-content>
+							<ion-list>
+								<ion-item [button]="true" id="select-device" (click)="getDevices()"><ion-label>Detect devices</ion-label></ion-item>
+								<ion-item [button]="true" [detail]="false" (click)="selectCamera()"><ion-label>Select camera</ion-label></ion-item>
+								<ion-item [button]="true" [detail]="false" (click)="selectMicrophone()"><ion-label>Select microphone</ion-label></ion-item>
+								<ion-item [button]="true" (click)="toggleMute()" [detail]="false"><ion-label>Toggle mute status</ion-label></ion-item>
+							</ion-list>
+						</ion-content>
+					</ng-template>
+				</ion-popover>
+			</ion-list>
+		</ion-content>
+	</ng-template>
+</ion-popover>
+
 <ion-content [fullscreen]="true" style="--background:black">
+	<!-- video element -->
 	<video #videoElement width="100%" height="100%"></video>
 
+	<!-- screen shot -->
+	<canvas id="canvas" style="display:none"></canvas>
+	<div class="output" style="display:none">
+		<img id="photo" alt="The screen capture will appear in this box." style="width: 1024px; height: 1024px;" />
+	</div>
+
+	<!-- session name -->
 	<ion-button fill="clear" id="present-session-alert" (click)="isSessionAlertOpen = true"><span class="session" *ngIf="session">{{session}} <ion-icon name="pencil"></ion-icon></span></ion-button>
 
+	<!-- camera selector (hidden) -->
 	<div class="camera-selector">
 		<ion-select id="ion-select-device" [(ngModel)]="selectedDevice" trigger="select-device" interface="action-sheet" title="Select camera" *ngIf="devices" (ionChange)="deviceSelected($event)" placeholder="Select camera" [disabled]="recording">
 			<ion-select-option *ngFor="let device of devices" [value]="device.deviceId">{{device.label}}</ion-select-option>
@@ -47,39 +80,13 @@
 		</ion-select>
 	</div>
 
+	<!-- microphone selector (hidden) -->
 	<div class="microphone-selector" style="display:none">
-		<ion-select id="ion-select-microphone" [(ngModel)]="selectedMicrophone" interface="action-sheet" title="Select microphone" *ngIf="microphoneInputs" (ionChange)="microphoneSelected($event)" placeholder="Select microphone" [disabled]="recording">
+		<ion-select id="ion-select-microphone" [(ngModel)]="selectedMicrophone" interface="action-sheet" title="Select microphone" (ionChange)="microphoneSelected($event)" placeholder="Select microphone" [disabled]="recording">
 			<ion-select-option *ngFor="let device of audioDevices" [value]="device.deviceId">{{device.label}}</ion-select-option>
 		</ion-select>
 	</div>
 </ion-content>
 
 <!-- session -->
-<ion-alert [isOpen]="isSessionAlertOpen" mode="md" (didDismiss)="isSessionAlertOpen = false" header="Session name" [buttons]="alertButtons" [inputs]="alertInputs" (didDismiss)="setSessionNameResult($event)" style="--max-width: 500px; --width: 500px"></ion-alert>
-
-<!-- extended menu -->
-<ion-popover trigger="menu-popover-button" [dismissOnSelect]="true" size="auto">
-	<ng-template>
-		<ion-content>
-			<ion-list>
-				<ion-item [button]="true" [detail]="false">Open media folder</ion-item>
-				<ion-item [button]="true" (click)="isSessionAlertOpen=true" [detail]="false"><ion-label>Set session name</ion-label></ion-item>
-				<ion-item [button]="true" id="devices-trigger" [detail]="true">Settings...</ion-item>
-				<ion-item [button]="true" href="about" [detail]="true"><ion-label>About</ion-label></ion-item>        
-
-				<ion-popover trigger="devices-trigger" [dismissOnSelect]="true" side="end">
-				  <ng-template>
-					<ion-content>
-					  <ion-list>
-						<ion-item [button]="true" id="select-device" (click)="getDevices()"><ion-label>Detect devices</ion-label></ion-item>
-						<ion-item [button]="true" [detail]="false" (click)="selectCamera()" ><ion-label>Select camera</ion-label></ion-item>
-						<ion-item [button]="true" [detail]="false" (click)="selectMicrophone()" ><ion-label>Select microphone</ion-label></ion-item>
-						<ion-item [button]="true" (click)="toggleMute()" [detail]="false"><ion-label>Toggle mute status</ion-label></ion-item>
-					  </ion-list>
-					</ion-content>
-				  </ng-template>
-				</ion-popover>
-			</ion-list>
-		</ion-content>
-	</ng-template>
-</ion-popover>
+<ion-alert [isOpen]="isSessionAlertOpen" mode="md" (didDismiss)="isSessionAlertOpen = false" header="Session name" [buttons]="alertButtons" [inputs]="sessionAlertInputs" (didDismiss)="setSessionNameResult($event)" style="--max-width: 500px; --width: 500px"></ion-alert>

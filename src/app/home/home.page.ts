@@ -17,13 +17,12 @@ export class HomePage implements AfterViewInit
 
 	devices: MediaDeviceInfo[] = [];
 	audioDevices: MediaDeviceInfo[] = [];
-	selectedDevice: string = '';
 
+	selectedDevice: string = '';
 	selectedMicrophone: string = '';
 
-	deviceInputs: AlertInput[] | undefined;
-	alertInputs: AlertInput[] | undefined;
-	microphoneInputs: AlertInput[] | undefined;
+	sessionAlertInputs: AlertInput[] | undefined;
+	isSessionAlertOpen: boolean = false;
 
 	ngAfterViewInit(): void
 	{
@@ -33,7 +32,7 @@ export class HomePage implements AfterViewInit
 		this.session = 'EndoStudio ' + new Date().toISOString().replace('T', ' ').split('.')[0].split(':')[0] + ':' + new Date().toISOString().replace('Z', '').split('.')[0].split(':')[1];
 
 		//initialise the session name input
-		this.alertInputs = [
+		this.sessionAlertInputs = [
 			{
 				placeholder: 'Session name',
 				name: 'session',
@@ -67,24 +66,11 @@ export class HomePage implements AfterViewInit
 
 		if (this.audioDevices.length)
 		{
-			this.microphoneInputs = [];
-			var i = 0;
-			this.audioDevices.forEach(device =>
-			{
-				if (this.microphoneInputs)
-				{
-					this.microphoneInputs.push({
-						type: 'radio',
-						label: device.label,
-						value: device.deviceId,
-						checked: ++i == 1
-					});
-				}
-			});
-			this.selectedMicrophone = this.microphoneInputs[0].value;
+			this.selectedMicrophone = this.audioDevices[0].deviceId;
 		}
 
-		if (this.selectedDevice) {
+		if (this.selectedDevice)
+		{
 			this.startCamera();
 		}
 	}
@@ -95,7 +81,8 @@ export class HomePage implements AfterViewInit
 	}
 
 
-	selectCamera() {
+	selectCamera()
+	{
 		var selector = document.getElementById('ion-select-device');
 		if (selector) selector.click();
 	}
@@ -114,14 +101,12 @@ export class HomePage implements AfterViewInit
 		this.startCamera();
 	}
 
-	selectMicrophone() {
+	selectMicrophone()
+	{
 		var selector = document.getElementById('ion-select-microphone');
 		if (selector) selector.click();
 	}
-	
-	isMicrophoneAlertOpen: boolean = false;
-	isSessionAlertOpen: boolean = false;
-	isVideoAlertOpen: boolean = false;
+
 	microphoneSelected(event: any)
 	{
 		if (event.detail.role == 'cancel') return;
@@ -138,13 +123,16 @@ export class HomePage implements AfterViewInit
 	async start(deviceId: string)
 	{
 		var audio: any = undefined;
-		if (!this.recordAudio) {
+		if (!this.recordAudio)
+		{
 			audio = false;
 		}
-		else if (!this.selectedMicrophone) {
+		else if (!this.selectedMicrophone)
+		{
 			audio = true;
 		}
-		else {
+		else
+		{
 			audio = {
 				deviceId: { exact: this.selectedMicrophone }
 			}
@@ -172,11 +160,38 @@ export class HomePage implements AfterViewInit
 		console.log('Error: ', error);
 	}
 
+	video: any;
+	canvas: any;
+	photo: any;
+	streaming: boolean = false;
+
+	width: number = 1024;
+	height: number = 768;
+
 	attachVideo(stream: MediaStream)
 	{
 		this.videoElement.nativeElement.srcObject = stream;
 		this.videoElement.nativeElement.play();
 		this.videoElement.nativeElement.muted = true;
+		
+		this.video = this.videoElement.nativeElement;
+		this.canvas = document.getElementById('canvas');
+		this.photo = document.getElementById('photo');
+		this.videoElement.nativeElement.addEventListener(
+			"canplay",
+			(ev: any) =>
+			{
+				if (!this.streaming)
+				{
+					this.height = (this.video.videoHeight / this.video.videoWidth) * this.width;
+					this.canvas.setAttribute("width", this.width);
+					this.canvas.setAttribute("height", this.height);
+					this.streaming = true;
+				}
+			},
+			false,
+		);
+		this.clearphoto();
 	}
 
 	recording: boolean = false;
@@ -287,9 +302,49 @@ export class HomePage implements AfterViewInit
 		toast.present();
 	}
 
+
+
 	takePhoto()
 	{
+		const context = this.canvas.getContext("2d");
+		if (this.width && this.height)
+		{
+			this.canvas.width = this.width;
+			this.canvas.height = this.height;
+			context.drawImage(this.video, 0, 0, this.width, this.height);
 
+			const data = this.canvas.toDataURL("image/jpeg");
+			this.photo.setAttribute("src", data);
+
+			//create a link and associate the video url
+			const link = document.createElement('a');
+			link.href = data;
+
+			//set the link to be downloadable
+			link.setAttribute('download', `${this.session}.jpg`);
+
+			//add the link to the DOM
+			document.body.appendChild(link);
+
+			//click the link
+			link.click();
+
+			this.saving = false;
+			this.presentToast('Image saved');
+		} 
+		else
+		{
+			this.clearphoto();
+		}
+	}
+
+	clearphoto() {
+		const context = this.canvas.getContext("2d");
+		context.fillStyle = "#AAA";
+		context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+		
+		const data = this.canvas.toDataURL("image/png");
+		this.photo.setAttribute("src", data);
 	}
 
 	session: string = '';
