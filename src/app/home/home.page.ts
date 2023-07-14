@@ -200,6 +200,8 @@ export class HomePage implements AfterViewInit
 	mediaRecorder: MediaRecorder | undefined;
 	recordedChunks: Blob[] = [];
 	recordAudio: boolean = true;
+	recordingStart: Date | undefined;
+	recordingTime: string = '00:00:00';
 	async startRecording() 
 	{
 		if (this.stream == undefined)
@@ -209,6 +211,31 @@ export class HomePage implements AfterViewInit
 		}
 		console.log('start recording called');
 		this.recording = true;
+		//start recording time - we want to count upwards in seconds eg. 00:10:30
+		this.recordingStart = new Date();
+		//set recordingTime to 00:00:00
+		this.recordingTime = '00:00:00';
+		//now count up every second
+		var self = this;
+		setInterval(function ()
+		{
+			if (self.recordingStart)
+			{
+				var now = new Date();
+				var diff = now.getTime() - self.recordingStart.getTime();
+				var seconds = Math.floor(diff / 1000);
+				var minutes = Math.floor(seconds / 60);
+				var hours = Math.floor(minutes / 60);
+				seconds = seconds % 60;
+				minutes = minutes % 60;
+				hours = hours % 60;
+				self.recordingTime = self.pad(hours) + ":" + self.pad(minutes) + ":" + self.pad(seconds	
+				);	
+			}
+		}, 1000);
+		
+		
+
 		this.presentToast('Recording started');
 		const options = { mimeType: 'video/webm' };
 		this.recordedChunks = [];
@@ -262,6 +289,11 @@ export class HomePage implements AfterViewInit
 		});
 
 		this.mediaRecorder.start();
+	}
+	
+	pad(n: number)
+	{
+		return (n < 10 ? '0' : '') + n;
 	}
 
 	stopRecording()

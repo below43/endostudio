@@ -41,6 +41,12 @@
 	font-size: 18px;
 }
 
+.recording-time {
+    font-size: 12px;
+    line-height: 32px;
+	color: var(--ion-color-primary);
+}
+
 :host ::ng-deep ion-select {
 	--highlight-color: var(--ion-color-primary);
 }

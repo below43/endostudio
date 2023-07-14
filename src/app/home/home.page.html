@@ -8,15 +8,19 @@
 			<ion-buttons slot="start">
 			</ion-buttons>
 			<ion-buttons slot="end">
-				<!-- todo: full screen -->
-				<ion-button size="large" (click)="takePhoto()">
+				<!-- recording time -->
+				<div class="recording-time" *ngIf="recording">
+					Recording: <span class="recording-time-text">{{recordingTime}}</span>
+				</div>
+				
+				<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving" style="width: 36px" title="Start recording">
+					<ion-icon name="ellipse" style="color:red;  font-size: 0.9em;"></ion-icon>
+				</ion-button>
+				<ion-button size="large" (click)="stopRecording()" *ngIf="recording" title="Stop recording">
+					<ion-icon name="stop"></ion-icon>
+				</ion-button>
+				<ion-button size="large" (click)="takePhoto()" title="Take photo">
 					<ion-icon name="camera-outline"></ion-icon>
-				</ion-button>
-				<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving">
-					<ion-icon name="ellipse" style="color:red; font-size: 0.9em;"></ion-icon>
-				</ion-button>
-				<ion-button size="large" (click)="stopRecording()" *ngIf="recording">
-					<ion-icon name="stop" style="color:black"></ion-icon>
 				</ion-button>
 				<ion-button size="large" (click)="toggleMute()" *ngIf="recordAudio" [disabled]="recording" title="Mute microphone">
 					<ion-icon name="mic-outline"></ion-icon>
@@ -27,7 +31,7 @@
 				<ion-button size="large" (click)="toggleFullscreen()" [disabled]="recording" title="Toggle fullscreen">
 					<ion-icon name="resize-outline"></ion-icon>
 				</ion-button>
-				<ion-button id="menu-popover-button" [disabled]="recording">
+				<ion-button id="menu-popover-button" [disabled]="recording" title="More...">
 					<ion-icon name="ellipsis-horizontal"></ion-icon>
 				</ion-button>
 			</ion-buttons>
