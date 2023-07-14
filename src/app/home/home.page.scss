@@ -74,8 +74,12 @@ ion-toolbar ion-button:hover {
 }
 
 .touch-button:hover {
+	cursor: pointer;
 	border: 1px solid rgba(255, 255, 255, 0.5);
-	opacity: 0.8;
+	
+	ion-icon {
+		opacity: 0.6;
+	}
 }
 
 
@@ -108,4 +112,8 @@ ion-toolbar ion-button:hover {
 #touch-start-recording,
 #touch-stop-recording {
 	bottom: 35%;
+}
+
+ion-toolbar ion-button:hover {
+	opacity: 0.6;
 }
