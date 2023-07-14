@@ -24,7 +24,7 @@ export class HomePage implements AfterViewInit
 	sessionAlertInputs: AlertInput[] | undefined;
 	isSessionAlertOpen: boolean = false;
 	isAboutOpen: boolean = false;
-	
+
 	ngAfterViewInit(): void
 	{
 		this.getDevices();
@@ -174,7 +174,7 @@ export class HomePage implements AfterViewInit
 		this.videoElement.nativeElement.srcObject = stream;
 		this.videoElement.nativeElement.play();
 		this.videoElement.nativeElement.muted = true;
-		
+
 		this.video = this.videoElement.nativeElement;
 		this.canvas = document.getElementById('canvas');
 		this.photo = document.getElementById('photo');
@@ -332,18 +332,19 @@ export class HomePage implements AfterViewInit
 
 			this.saving = false;
 			this.presentToast('Image saved');
-		} 
+		}
 		else
 		{
 			this.clearphoto();
 		}
 	}
 
-	clearphoto() {
+	clearphoto()
+	{
 		const context = this.canvas.getContext("2d");
 		context.fillStyle = "#AAA";
 		context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-		
+
 		const data = this.canvas.toDataURL("image/png");
 		this.photo.setAttribute("src", data);
 	}
@@ -382,6 +383,18 @@ export class HomePage implements AfterViewInit
 		if (session)
 		{
 			this.session = session.trim();
+		}
+	}
+
+	toggleFullscreen()
+	{
+		if (!document.fullscreenElement)
+		{
+			document.documentElement.requestFullscreen();
+		} 
+		else if (document.exitFullscreen)
+		{
+			document.exitFullscreen();
 		}
 	}
 }

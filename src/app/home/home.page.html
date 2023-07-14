@@ -10,7 +10,7 @@
 			<ion-buttons slot="end">
 				<!-- todo: full screen -->
 				<ion-button size="large" (click)="takePhoto()">
-					<ion-icon name="camera"></ion-icon>
+					<ion-icon name="camera-outline"></ion-icon>
 				</ion-button>
 				<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving">
 					<ion-icon name="ellipse" style="color:red; font-size: 0.9em;"></ion-icon>
@@ -23,6 +23,9 @@
 				</ion-button>
 				<ion-button size="large" (click)="toggleMute()" *ngIf="!recordAudio" [disabled]="recording" title="Unmute microphone">
 					<ion-icon name="mic-off-outline"></ion-icon>
+				</ion-button>
+				<ion-button size="large" (click)="toggleFullscreen()" [disabled]="recording" title="Toggle fullscreen">
+					<ion-icon name="resize-outline"></ion-icon>
 				</ion-button>
 				<ion-button id="menu-popover-button" [disabled]="recording">
 					<ion-icon name="ellipsis-horizontal"></ion-icon>
