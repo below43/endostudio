@@ -1,7 +1,7 @@
 {
   "name": "endo-studio",
-  "version": "0.0.1",
-  "author": "EndoStudio",
+  "version": "1.00.00",
+  "author": "Andrew Drake <andrew@below43.nz>",
   "homepage": "https://endostudio.app/",
   "license": "MIT",
   "scripts": {
@@ -66,5 +66,5 @@
     "ts-node": "^8.3.0",
     "typescript": "~5.0.2"
   },
-  "description": "An Ionic project"
+  "description": "EndoStudio is an app for viewing and recording video input from endoscopes and boroscopes."
 }

@@ -113,7 +113,7 @@
 
 <!-- about -->
 
-<ion-modal #modal [isOpen]="isAboutOpen" expand="block" mode="ios">
+<ion-modal #modal [isOpen]="isAboutOpen" expand="block" mode="md">
 	<ng-template>
 		<ion-header>
 			<ion-toolbar>
@@ -124,10 +124,13 @@
 			</ion-toolbar>
 		</ion-header>
 		<ion-content class="ion-padding">
-			<h1>{{appEnvironment.productName}}</h1>
-			<p>{{appEnvironment.about}}</p>
-			<p>Powered by <a target="_blank" href="https://github.com/below43/endo-studio">EndoStudio</a> (MIT License)</p>
-			<p>&copy; {{appEnvironment.copyrightOwner}} {{appEnvironment.copyrightYear}}</p>
+			<h1>About {{appEnvironment.productName}}</h1>
+			<h5>Version {{appVersion}}</h5>
+			<p>{{appEnvironment.productName}} is an app for viewing and recording video input from endoscopes and boroscopes.</p>
+			<p>Powered by <a target="_blank" href="https://github.com/below43/endo-studio">EndoStudio</a>
+				(License: <a target="_blank" href="https://github.com/below43/endostudio/blob/main/LICENSE">MIT</a>)<br/>
+				Author: <a target="_blank" href="https://andrew.drake.nz">Andrew Drake</a><br/>
+				&copy; Below 43 Ltd (<a target="_blank" href="https://below43.nz">below43.nz</a>) 2023</p>
 		</ion-content>
 	</ng-template>
 </ion-modal>

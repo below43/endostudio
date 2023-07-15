@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { AlertInput, ToastController } from '@ionic/angular';
 import { environment } from 'src/environments/environment';
+import { version } from 'src/environments/version';
 
 @Component({
 	selector: 'app-home',
@@ -10,7 +11,6 @@ import { environment } from 'src/environments/environment';
 export class HomePage implements AfterViewInit
 {
 	@ViewChild('videoElement') videoElement!: ElementRef;
-
 
 	constructor(
 		private toastController: ToastController
@@ -27,6 +27,7 @@ export class HomePage implements AfterViewInit
 	isAboutOpen: boolean = false;
 
 	appEnvironment = environment;
+	appVersion = version;
 
 	ngAfterViewInit(): void
 	{
