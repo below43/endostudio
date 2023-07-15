@@ -3,7 +3,7 @@
 		<ion-toolbar>
 			<ion-title>
 				<img src="assets/icon/favicon.png" style="height:26px; position: absolute; top: 0px" />
-				<span style="margin-left: 34px">EndoStudio</span>
+				<span style="margin-left: 34px">{{appEnvironment.productName}}</span>
 			</ion-title>
 			<ion-buttons slot="start">
 			</ion-buttons>
@@ -124,12 +124,10 @@
 			</ion-toolbar>
 		</ion-header>
 		<ion-content class="ion-padding">
-			<h1>EndoStudio</h1>
-			<p>EndoStudio is an app for viewing and recording video input from endoscopes and boroscopes.</p>
-			<p>Made by <a href="https://below43.nz" target="_blank">Below43.nz</a></p>
-			<p><a href="https://github.com/below43/endo-studio" target="_blank">More information</a></p>
-			<p>MIT License</p>
-			<p>&copy; Below 43 Ltd 2023</p>
+			<h1>{{appEnvironment.productName}}</h1>
+			<p>{{appEnvironment.about}}</p>
+			<p>Powered by <a target="_blank" href="https://github.com/below43/endo-studio">EndoStudio</a> (MIT License)</p>
+			<p>&copy; {{appEnvironment.copyrightOwner}} {{appEnvironment.copyrightYear}}</p>
 		</ion-content>
 	</ng-template>
 </ion-modal>

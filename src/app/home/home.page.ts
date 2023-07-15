@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { AlertInput, ToastController } from '@ionic/angular';
+import { environment } from 'src/environments/environment';
 
 @Component({
 	selector: 'app-home',
@@ -25,12 +26,14 @@ export class HomePage implements AfterViewInit
 	isSessionAlertOpen: boolean = false;
 	isAboutOpen: boolean = false;
 
+	appEnvironment = environment;
+
 	ngAfterViewInit(): void
 	{
 		this.getDevices();
 
 		//session name with date and time and time zone in current locale, removing T and Z, and removing milliseconds and seconds
-		this.session = 'EndoStudio ' + new Date().toISOString().replace('T', ' ').split('.')[0].split(':')[0] + ':' + new Date().toISOString().replace('Z', '').split('.')[0].split(':')[1];
+		this.session = this.appEnvironment.productName + ' ' + new Date().toISOString().replace('T', ' ').split('.')[0].split(':')[0] + ':' + new Date().toISOString().replace('Z', '').split('.')[0].split(':')[1];
 
 		//initialise the session name input
 		this.sessionAlertInputs = [
@@ -229,12 +232,9 @@ export class HomePage implements AfterViewInit
 				seconds = seconds % 60;
 				minutes = minutes % 60;
 				hours = hours % 60;
-				self.recordingTime = self.pad(hours) + ":" + self.pad(minutes) + ":" + self.pad(seconds	
-				);	
+				self.recordingTime = self.pad(hours) + ":" + self.pad(minutes) + ":" + self.pad(seconds);
 			}
 		}, 1000);
-		
-		
 
 		this.presentToast('Recording started');
 		const options = { mimeType: 'video/webm' };
@@ -290,7 +290,7 @@ export class HomePage implements AfterViewInit
 
 		this.mediaRecorder.start();
 	}
-	
+
 	pad(n: number)
 	{
 		return (n < 10 ? '0' : '') + n;
@@ -423,7 +423,7 @@ export class HomePage implements AfterViewInit
 		if (!document.fullscreenElement)
 		{
 			document.documentElement.requestFullscreen();
-		} 
+		}
 		else if (document.exitFullscreen)
 		{
 			document.exitFullscreen();
