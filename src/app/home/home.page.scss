@@ -129,3 +129,8 @@ video {
 ion-toolbar {
     --background: rgba(var(--ion-color-primary-contrast-rgb), 0.7);
 }
+
+ion-title span.product-name {
+	// color: var(--ion-color-primary);
+	margin-left: 40px;
+}
