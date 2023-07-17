@@ -41,8 +41,8 @@
 }
 
 .recording-time {
-    font-size: 12px;
-    line-height: 32px;
+	font-size: 12px;
+	line-height: 32px;
 	color: var(--ion-color-primary);
 }
 
@@ -75,12 +75,11 @@ ion-toolbar ion-button:hover {
 .touch-button:hover {
 	cursor: pointer;
 	border: 1px solid rgba(255, 255, 255, 0.5);
-	
+
 	ion-icon {
 		opacity: 0.6;
 	}
 }
-
 
 #touch-take-photo,
 #touch-start-recording,
@@ -119,18 +118,24 @@ ion-toolbar ion-button:hover {
 
 video {
 	min-width: 100%;
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: auto;
-    height: auto;
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	width: auto;
+	height: auto;
 }
 
 ion-toolbar {
-    --background: rgba(var(--ion-color-primary-contrast-rgb), 0.7);
+	--background: rgba(var(--ion-color-primary-contrast-rgb), 0.7);
 }
 
-ion-title span.product-name {
-	// color: var(--ion-color-primary);
-	margin-left: 40px;
+ion-title {
+	img {
+		height: 24px;
+		position: absolute;
+		top: 0px;
+	}
+	span.product-name {
+		margin-left: 40px;
+	}
 }
