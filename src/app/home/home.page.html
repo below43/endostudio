@@ -55,6 +55,7 @@
 								<ion-item [button]="true" [detail]="false" (click)="selectCamera()"><ion-label>Select camera</ion-label></ion-item>
 								<ion-item [button]="true" [detail]="false" (click)="selectMicrophone()"><ion-label>Select microphone</ion-label></ion-item>
 								<ion-item [button]="true" (click)="toggleMute()" [detail]="false"><ion-label>Toggle mute status</ion-label></ion-item>
+								<ion-item [button]="true" (click)="zoom = !zoom" [detail]="false"><ion-label>Toggle zoom</ion-label></ion-item>
 							</ion-list>
 						</ion-content>
 					</ng-template>
@@ -66,7 +67,7 @@
 
 <ion-content [fullscreen]="true" style="--background:black">
 	<!-- video element -->
-	<video #videoElement width="100%" height="100%"></video>
+	<video #videoElement width="100%" height="100%" [class.zoom]="zoom"></video>
 
 	<!-- take photo button with white border and white icon -->
 	<ion-button class="touch-button" fill="clear" id="touch-take-photo" (click)="takePhoto()" [disabled]="saving">

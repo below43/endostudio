@@ -25,6 +25,7 @@ export class HomePage implements AfterViewInit
 	sessionAlertInputs: AlertInput[] | undefined;
 	isSessionAlertOpen: boolean = false;
 	isAboutOpen: boolean = false;
+	zoom: boolean = true;
 
 	appEnvironment = environment;
 	appVersion = version;
