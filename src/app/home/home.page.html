@@ -1,41 +1,39 @@
 <ion-header [translucent]="true">
 	<ion-toolbar>
-		<ion-toolbar>
-			<ion-title>
-				<img src="assets/icon/favicon.png" style="height:26px; position: absolute; top: 0px" />
-				<span style="margin-left: 34px">{{appEnvironment.productName}}</span>
-			</ion-title>
-			<ion-buttons slot="start">
-			</ion-buttons>
-			<ion-buttons slot="end">
-				<!-- recording time -->
-				<div class="recording-time" *ngIf="recording">
-					Recording: <span class="recording-time-text">{{recordingTime}}</span>
-				</div>
-				
-				<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving" style="width: 36px" title="Start recording">
-					<ion-icon name="ellipse" style="color:red;  font-size: 0.9em;"></ion-icon>
-				</ion-button>
-				<ion-button size="large" (click)="stopRecording()" *ngIf="recording" title="Stop recording">
-					<ion-icon name="stop"></ion-icon>
-				</ion-button>
-				<ion-button size="large" (click)="takePhoto()" title="Take photo">
-					<ion-icon name="camera-outline"></ion-icon>
-				</ion-button>
-				<ion-button size="large" (click)="toggleMute()" *ngIf="recordAudio" [disabled]="recording" title="Mute microphone">
-					<ion-icon name="mic-outline"></ion-icon>
-				</ion-button>
-				<ion-button size="large" (click)="toggleMute()" *ngIf="!recordAudio" [disabled]="recording" title="Unmute microphone">
-					<ion-icon name="mic-off-outline"></ion-icon>
-				</ion-button>
-				<ion-button size="large" (click)="toggleFullscreen()" [disabled]="recording" title="Toggle fullscreen">
-					<ion-icon name="resize-outline"></ion-icon>
-				</ion-button>
-				<ion-button id="menu-popover-button" [disabled]="recording" title="More...">
-					<ion-icon name="ellipsis-horizontal"></ion-icon>
-				</ion-button>
-			</ion-buttons>
-		</ion-toolbar>
+		<ion-title>
+			<img src="assets/icon/favicon.png" style="height:26px; position: absolute; top: 0px" />
+			<span style="margin-left: 34px">{{appEnvironment.productName}}</span>
+		</ion-title>
+		<ion-buttons slot="start">
+		</ion-buttons>
+		<ion-buttons slot="end">
+			<!-- recording time -->
+			<div class="recording-time" *ngIf="recording">
+				Recording: <span class="recording-time-text">{{recordingTime}}</span>
+			</div>
+
+			<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving" style="width: 36px" title="Start recording">
+				<ion-icon name="ellipse" style="color:red;  font-size: 0.9em;"></ion-icon>
+			</ion-button>
+			<ion-button size="large" (click)="stopRecording()" *ngIf="recording" title="Stop recording">
+				<ion-icon name="stop"></ion-icon>
+			</ion-button>
+			<ion-button size="large" (click)="takePhoto()" title="Take photo">
+				<ion-icon name="camera-outline"></ion-icon>
+			</ion-button>
+			<ion-button size="large" (click)="toggleMute()" *ngIf="recordAudio" [disabled]="recording" title="Mute microphone">
+				<ion-icon name="mic-outline"></ion-icon>
+			</ion-button>
+			<ion-button size="large" (click)="toggleMute()" *ngIf="!recordAudio" [disabled]="recording" title="Unmute microphone">
+				<ion-icon name="mic-off-outline"></ion-icon>
+			</ion-button>
+			<ion-button size="large" (click)="toggleFullscreen()" [disabled]="recording" title="Toggle fullscreen">
+				<ion-icon name="resize-outline"></ion-icon>
+			</ion-button>
+			<ion-button id="menu-popover-button" [disabled]="recording" title="More...">
+				<ion-icon name="ellipsis-horizontal"></ion-icon>
+			</ion-button>
+		</ion-buttons>
 	</ion-toolbar>
 </ion-header>
 
@@ -128,8 +126,8 @@
 			<h5>Version {{appVersion}}</h5>
 			<p>{{appEnvironment.productName}} is an app for viewing and recording video input from endoscopes and boroscopes.</p>
 			<p>Powered by <a target="_blank" href="https://github.com/below43/endo-studio">EndoStudio</a>
-				(License: <a target="_blank" href="https://github.com/below43/endostudio/blob/main/LICENSE">MIT</a>)<br/>
-				Author: <a target="_blank" href="https://andrew.drake.nz">Andrew Drake</a><br/>
+				(License: <a target="_blank" href="https://github.com/below43/endostudio/blob/main/LICENSE">MIT</a>)<br />
+				Author: <a target="_blank" href="https://andrew.drake.nz">Andrew Drake</a><br />
 				&copy; Below 43 Ltd (<a target="_blank" href="https://below43.nz">below43.nz</a>) 2023</p>
 		</ion-content>
 	</ng-template>
