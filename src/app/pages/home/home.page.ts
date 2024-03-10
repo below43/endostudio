@@ -1,5 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { AlertInput, ToastController } from '@ionic/angular';
+import { CameraService } from 'src/app/services/camera.service';
+import { FilesystemService } from 'src/app/services/filesystem.service';
 import { environment } from 'src/environments/environment';
 import { version } from 'src/environments/version';
 
@@ -13,7 +15,9 @@ export class HomePage implements AfterViewInit
 	@ViewChild('videoElement') videoElement!: ElementRef;
 
 	constructor(
-		private toastController: ToastController
+		private toastController: ToastController,
+		private cameraService: CameraService,
+		private filesystemService: FilesystemService
 	) { }
 
 	devices: MediaDeviceInfo[] = [];
@@ -50,10 +54,8 @@ export class HomePage implements AfterViewInit
 
 	async getDevices()
 	{
-		await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+		const devices = await this.cameraService.getDevices();
 
-		console.log('getDevices called');
-		const devices = await navigator.mediaDevices.enumerateDevices();
 		console.log('Devices:', this.devices);
 		this.devices = devices.filter(device => device.kind === 'videoinput');
 		this.audioDevices = devices.filter(device => device.kind === 'audioinput');
@@ -153,7 +155,7 @@ export class HomePage implements AfterViewInit
 
 		try
 		{
-			this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+			this.stream = await this.cameraService.getUserMedia(constraints);
 			this.attachVideo(this.stream);
 		} catch (err)
 		{

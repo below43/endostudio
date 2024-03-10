@@ -24,16 +24,24 @@ Note: If there was a previous installation of the Ionic CLI, it will need to be 
 `npm install -g @ionic/cli`
 
 ### Run the app
-`ionic serve --configuration=development`
+```
+ionic serve --configuration=development
+```
 
 or to run as dev with ssl:
-`ionic serve --configuration=development -b --ssl --external --disableHostCheck`
+```
+ionic serve --configuration=development -b --ssl --external --disableHostCheck
+```
 
 or for http:
-`ionic serve --configuration=development -b --external --disableHostCheck`
+```
+ionic serve --configuration=development -b --external --disableHostCheck
+```
 
 or with live reload:
-`ionic capacitor run  --livereload`
+```
+ionic capacitor run  --livereload
+```
 
 ### SSL Cert
 
