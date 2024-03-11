@@ -10,9 +10,10 @@ import { version } from 'src/environments/version';
 	templateUrl: 'home.page.html',
 	styleUrls: ['home.page.scss'],
 })
-export class HomePage implements AfterViewInit
+export class HomePage implements OnInit, AfterViewInit
 {
 	@ViewChild('videoElement') videoElement!: ElementRef;
+	mimeType: string = '';
 
 	constructor(
 		private toastController: ToastController,
@@ -34,6 +35,12 @@ export class HomePage implements AfterViewInit
 	appEnvironment = environment;
 	appVersion = version;
 
+
+	ngOnInit()
+	{
+		if (this.selectedDevice) this.startCamera();
+	}
+	
 	ngAfterViewInit(): void
 	{
 		this.getDevices();
@@ -240,8 +247,22 @@ export class HomePage implements AfterViewInit
 			}
 		}, 1000);
 
+		if (MediaRecorder.isTypeSupported('video/mp4'))
+		{
+			this.mimeType = 'video/mp4';
+		} 
+		else if (MediaRecorder.isTypeSupported('video/webm'))
+		{
+			this.mimeType = 'video/webm';
+		}
+		else
+		{
+			alert('No supported video MIME types found');
+			return;
+		}
+		const options = { mimeType: this.mimeType };
+		
 		this.presentToast('Recording started');
-		const options = { mimeType: 'video/webm' };
 		this.recordedChunks = [];
 		this.mediaRecorder = new MediaRecorder(this.stream, options);
 
@@ -270,7 +291,7 @@ export class HomePage implements AfterViewInit
 				return;
 			}
 
-			const blob = new Blob(self.recordedChunks, { type: 'video/webm' });
+			const blob = new Blob(self.recordedChunks, { type: this.mimeType });
 
 			//generate video url from blob
 			const videoUrl = window.URL.createObjectURL(blob);
@@ -280,7 +301,19 @@ export class HomePage implements AfterViewInit
 			link.href = videoUrl;
 
 			//set the link to be downloadable
-			link.setAttribute('download', `${self.session}.webm`);
+			let fileExtension = '';
+			if (this.mimeType == 'video/mp4')
+			{
+				fileExtension = 'mp4';
+			}
+			else if (this.mimeType == 'video/webm')
+			{
+				fileExtension = 'webm';
+			}
+			else {
+				fileExtension = 'err';
+			}
+			link.setAttribute('download', `${self.session}.${fileExtension}`);
 
 			//add the link to the DOM
 			document.body.appendChild(link);
@@ -331,15 +364,13 @@ export class HomePage implements AfterViewInit
 		const toast = await this.toastController.create({
 			message: message,
 			duration: 2000,
-			position: 'middle',
+			position: 'bottom',
 			mode: 'ios',
 			translucent: true
 
 		});
 		toast.present();
 	}
-
-
 
 	takePhoto()
 	{
