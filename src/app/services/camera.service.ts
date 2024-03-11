@@ -10,16 +10,33 @@ export class CameraService
 
 	async getDevices(): Promise<MediaDeviceInfo[]>
 	{
-		await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+		try
+		{
+			await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+		}
+		catch (err)
+		{
+			console.error('Error getting user media:', err);
+			throw err;
+		}
 
-		console.log('getDevices called');
 		const devices = await navigator.mediaDevices.enumerateDevices();
+		console.log('getDevices', devices);
 		return devices;
 	}
-	
+
 	async getUserMedia(constraints: { video: { deviceId: { exact: string; }; }; audio: any; }): Promise<MediaStream>
 	{
-		const stream = await navigator.mediaDevices.getUserMedia(constraints);
+		let stream;
+		try
+		{
+			stream = await navigator.mediaDevices.getUserMedia(constraints);
+		}
+		catch (err)
+		{
+			console.error('Error getting user media with constraints:', err);
+			throw err;
+		}
 		return stream;
 	}
 }

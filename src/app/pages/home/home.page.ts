@@ -61,6 +61,7 @@ export class HomePage implements OnInit, AfterViewInit
 
 	async getDevices()
 	{
+
 		const devices = await this.cameraService.getDevices();
 
 		console.log('Devices:', this.devices);
@@ -77,6 +78,7 @@ export class HomePage implements OnInit, AfterViewInit
 		else
 		{
 			this.selectedDevice = '';
+			this.stopStreamTracks();
 		}
 
 		if (this.audioDevices.length)
@@ -108,12 +110,22 @@ export class HomePage implements OnInit, AfterViewInit
 
 		if (event.detail.value == 'refresh')
 		{
-			console.log('refreshing devices');
+			this.stopStreamTracks();
+			
 			this.getDevices();
 			return;
 		}
 		this.selectedDevice = event.detail.value;
 		this.startCamera();
+	}
+
+	async stopStreamTracks()
+	{
+		// Stop all tracks of the current stream
+		if (this.stream) {
+			this.stream.getTracks().forEach(track => track.stop());
+			this.stream = undefined;
+		}
 	}
 
 	selectMicrophone()
@@ -166,6 +178,7 @@ export class HomePage implements OnInit, AfterViewInit
 			this.attachVideo(this.stream);
 		} catch (err)
 		{
+			alert(err);
 			this.handleError(err);
 		}
 	}
