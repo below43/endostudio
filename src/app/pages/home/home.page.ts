@@ -374,6 +374,12 @@ export class HomePage implements OnInit, AfterViewInit
 
 	takePhoto()
 	{
+		if (this.stream == undefined)
+		{
+			alert('Please select a camera first');
+			return;
+		}
+		
 		const context = this.canvas.getContext("2d");
 		if (this.width && this.height)
 		{
