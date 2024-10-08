@@ -312,7 +312,7 @@ export class HomePage implements OnInit, AfterViewInit
 			//create a link and associate the video url
 			const link = document.createElement('a');
 			link.href = videoUrl;
-
+console.log(this.mimeType);
 			//set the link to be downloadable
 			let fileExtension = '';
 			if (this.mimeType == 'video/mp4' || this.mimeType.startsWith('video/mp4'))
