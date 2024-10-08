@@ -315,7 +315,7 @@ export class HomePage implements OnInit, AfterViewInit
 
 			//set the link to be downloadable
 			let fileExtension = '';
-			if (this.mimeType == 'video/mp4')
+			if (this.mimeType == 'video/mp4' || this.mimeType.startsWith('video/mp4'))
 			{
 				fileExtension = 'mp4';
 			}
