@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'endo-studio',
+  appId: 'app.endostudio',
+  appName: 'EndoStudio',
   webDir: 'www',
   server: {
     androidScheme: 'https'

@@ -4,6 +4,9 @@ import { CameraService } from 'src/app/services/camera.service';
 import { FilesystemService } from 'src/app/services/filesystem.service';
 import { environment } from 'src/environments/environment';
 import { version } from 'src/environments/version';
+import { Capacitor } from '@capacitor/core';
+
+
 
 @Component({
 	selector: 'app-home',
@@ -40,9 +43,15 @@ export class HomePage implements OnInit, AfterViewInit
 	{
 		if (this.selectedDevice) this.startCamera();
 	}
-	
+
 	ngAfterViewInit(): void
 	{
+		//if native, check permissions on devices first
+		if (Capacitor.isNativePlatform())
+		{
+			this.checkPermissions();
+		}
+
 		this.getDevices();
 
 		//session name with date and time and time zone in current locale, removing T and Z, and removing milliseconds and seconds
@@ -61,7 +70,6 @@ export class HomePage implements OnInit, AfterViewInit
 
 	async getDevices()
 	{
-
 		const devices = await this.cameraService.getDevices();
 
 		console.log('Devices:', this.devices);
@@ -111,7 +119,7 @@ export class HomePage implements OnInit, AfterViewInit
 		if (event.detail.value == 'refresh')
 		{
 			this.stopStreamTracks();
-			
+
 			this.getDevices();
 			return;
 		}
@@ -122,7 +130,8 @@ export class HomePage implements OnInit, AfterViewInit
 	async stopStreamTracks()
 	{
 		// Stop all tracks of the current stream
-		if (this.stream) {
+		if (this.stream)
+		{
 			this.stream.getTracks().forEach(track => track.stop());
 			this.stream = undefined;
 		}
@@ -263,7 +272,7 @@ export class HomePage implements OnInit, AfterViewInit
 		if (MediaRecorder.isTypeSupported('video/mp4'))
 		{
 			this.mimeType = 'video/mp4';
-		} 
+		}
 		else if (MediaRecorder.isTypeSupported('video/webm'))
 		{
 			this.mimeType = 'video/webm';
@@ -274,7 +283,7 @@ export class HomePage implements OnInit, AfterViewInit
 			return;
 		}
 		const options = { mimeType: this.mimeType };
-		
+
 		this.presentToast('Recording started');
 		this.recordedChunks = [];
 		this.mediaRecorder = new MediaRecorder(this.stream, options);
@@ -312,7 +321,7 @@ export class HomePage implements OnInit, AfterViewInit
 			//create a link and associate the video url
 			const link = document.createElement('a');
 			link.href = videoUrl;
-console.log(this.mimeType);
+
 			//set the link to be downloadable
 			let fileExtension = '';
 			if (this.mimeType == 'video/mp4' || this.mimeType.startsWith('video/mp4'))
@@ -323,7 +332,8 @@ console.log(this.mimeType);
 			{
 				fileExtension = 'webm';
 			}
-			else {
+			else
+			{
 				fileExtension = 'err';
 			}
 			link.setAttribute('download', `${self.session}.${fileExtension}`);
@@ -392,7 +402,7 @@ console.log(this.mimeType);
 			alert('Please select a camera first');
 			return;
 		}
-		
+
 		const context = this.canvas.getContext("2d");
 		if (this.width && this.height)
 		{
@@ -482,5 +492,9 @@ console.log(this.mimeType);
 		{
 			document.exitFullscreen();
 		}
+	}
+
+	checkPermissions() {
+		
 	}
 }

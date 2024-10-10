@@ -53,3 +53,9 @@ See also: https://ionicframework.com/docs/developing/previewing
 ### Proxy
 To stop CORS errors, add the following environment variable to your dev machine
 `export IONIC_HTTP_PROXY="https://localhost:7280"`
+
+
+# iOS Builds
+```
+ionic capacitor build ios
+```
