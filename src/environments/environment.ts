@@ -4,7 +4,8 @@
 
 export const environment = {
 	production: false,
-	productName: 'EndoStudio'
+	productName: 'EndoStudio',
+	creator: 'Below 43 Ltd',
 };
 
 /*
