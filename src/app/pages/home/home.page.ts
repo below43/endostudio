@@ -1,12 +1,14 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { AlertInput, ToastController } from '@ionic/angular';
+import { AlertController, AlertInput, ToastController } from '@ionic/angular';
 import { CameraService } from 'src/app/services/camera.service';
 import { FilesystemService } from 'src/app/services/filesystem.service';
 import { environment } from 'src/environments/environment';
 import { version } from 'src/environments/version';
 import { Capacitor } from '@capacitor/core';
-
-
+import { StorageService } from 'src/services/storage.service';
+import { App } from '@capacitor/app';
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import { getLocalIsoTimestamp } from 'local-iso-timestamp';
 
 @Component({
 	selector: 'app-home',
@@ -21,7 +23,9 @@ export class HomePage implements OnInit, AfterViewInit
 	constructor(
 		private toastController: ToastController,
 		private cameraService: CameraService,
-		private filesystemService: FilesystemService
+		private filesystemService: FilesystemService,
+		private alertController: AlertController,
+		private storageService: StorageService,
 	) { }
 
 	devices: MediaDeviceInfo[] = [];
@@ -42,6 +46,53 @@ export class HomePage implements OnInit, AfterViewInit
 	ngOnInit()
 	{
 		if (this.selectedDevice) this.startCamera();
+		this.initialiseAsync();
+	}
+
+	async initialiseAsync()
+	{
+		const agreed = await this.storageService.getItem('agreedToTerms');
+		if (!agreed)
+		{
+			this.showDisclaimerAlert();
+		}
+	}
+
+	async showDisclaimerAlert()
+	{
+		const alert = await this.alertController.create({
+			header: 'Disclaimer',
+			message: `${environment.productName} is not intended for medical use. ${environment.creator} is not liable for any misuse of the app, including but not limited to any loss of life or injury resulting from its use. Users are responsible for ensuring that the app is used in a safe and appropriate manner.
+				  <br/><br/>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`,
+			buttons: [
+				{
+					text: 'Disagree',
+					role: 'cancel',
+					handler: () =>
+					{
+						//close the app
+						if (Capacitor.isNativePlatform())	
+						{
+							App.exitApp();
+						}
+						else
+						{
+							//close the browser
+							window.close();
+						}
+					}
+				},
+				{
+					text: 'Agree',
+					handler: async () =>
+					{
+						await this.storageService.setItem('agreedToTerms', true);
+					}
+				}
+			]
+		});
+
+		await alert.present();
 	}
 
 	ngAfterViewInit(): void
@@ -55,7 +106,12 @@ export class HomePage implements OnInit, AfterViewInit
 		this.getDevices();
 
 		//session name with date and time and time zone in current locale, removing T and Z, and removing milliseconds and seconds
-		this.session = this.appEnvironment.productName + ' ' + new Date().toISOString().replace('T', ' ').split('.')[0].split(':')[0] + ':' + new Date().toISOString().replace('Z', '').split('.')[0].split(':')[1];
+
+		const localIsoTimestamp = getLocalIsoTimestamp();
+		console.log('Local ISO timestamp:', localIsoTimestamp);
+
+		this.session = this.appEnvironment.productName + ' ' + localIsoTimestamp.replace('T', ' ').split('.')[0].split(':')[0] + ':' + localIsoTimestamp.replace('Z', '').split('.')[0].split(':')[1];
+		this.resetSessionFileCounter();
 
 		//initialise the session name input
 		this.sessionAlertInputs = [
@@ -70,28 +126,62 @@ export class HomePage implements OnInit, AfterViewInit
 
 	async getDevices()
 	{
-		const devices = await this.cameraService.getDevices();
-
-		console.log('Devices:', this.devices);
-		this.devices = devices.filter(device => device.kind === 'videoinput');
-		this.audioDevices = devices.filter(device => device.kind === 'audioinput');
-		console.log('Available input and output devices:', this.devices);
-
-		//try to find USB camera
-		const usbDevices = this.devices.filter(device => device.label.toLowerCase().includes('usb'));
-		if (usbDevices.length)
+		try
 		{
-			this.selectedDevice = usbDevices[0].deviceId;
+			const devices = await this.cameraService.getDevices();
+			console.log('Devices:', this.devices);
+			this.devices = devices.filter(device => device.kind === 'videoinput');
+			this.audioDevices = devices.filter(device => device.kind === 'audioinput');
+			console.log('Available input and output devices:', this.devices);
 		}
-		else
+		catch (err)
 		{
-			this.selectedDevice = '';
-			this.stopStreamTracks();
+			console.error('Error getting devices:', err);
+			const alert = this.alertController.create({
+				header: 'Error getting devices',
+				message: 'Please check that you have given the app permission to use the camera and microphone in the app settings',
+				buttons: ['OK']
+			}).then(alert => alert.present());
 		}
 
-		if (this.audioDevices.length)
+		try
 		{
-			this.selectedMicrophone = this.audioDevices[0].deviceId;
+			const usbDevices = this.devices.filter(device => device.label.toLowerCase().includes('usb'));
+			if (usbDevices.length)
+			{
+				this.selectedDevice = usbDevices[0].deviceId;
+			}
+			else
+			{
+				this.selectedDevice = '';
+				this.stopStreamTracks();
+			}
+		}
+		catch (err)
+		{
+			console.error('Error getting USB devices:', err);
+			await this.alertController.create({
+				header: 'No USB camera found',
+				message: 'Please check that you have a USB camera connected and that you have given the app permission to use the camera in the app settings',
+				buttons: ['OK']
+			}).then(alert => alert.present());
+		}
+
+		try
+		{
+			if (this.audioDevices.length)
+			{
+				this.selectedMicrophone = this.audioDevices[0].deviceId;
+			}
+		}
+		catch (err)
+		{
+			console.error('Error getting microphones:', err);
+			await this.alertController.create({
+				header: 'No microphone found',
+				message: 'Please check that you have a microphone connected and that you have given the app permission to use the microphone in the app settings',
+				buttons: ['OK']
+			}).then(alert => alert.present());
 		}
 
 		if (this.selectedDevice)
@@ -187,7 +277,7 @@ export class HomePage implements OnInit, AfterViewInit
 			this.attachVideo(this.stream);
 		} catch (err)
 		{
-			alert(err);
+			this.presentToast('Error attaching video. ' + err + '');
 			this.handleError(err);
 		}
 	}
@@ -238,11 +328,11 @@ export class HomePage implements OnInit, AfterViewInit
 	recordAudio: boolean = true;
 	recordingStart: Date | undefined;
 	recordingTime: string = '00:00:00';
-	async startRecording() 
+	async startRecording()
 	{
 		if (this.stream == undefined)
 		{
-			alert('Please select a camera first');
+			await this.presentToast('Please select a camera first');
 			return;
 		}
 		console.log('start recording called');
@@ -279,7 +369,7 @@ export class HomePage implements OnInit, AfterViewInit
 		}
 		else
 		{
-			alert('No supported video MIME types found');
+			this.presentToast('No supported video MIME types found');
 			return;
 		}
 		const options = { mimeType: this.mimeType };
@@ -312,40 +402,7 @@ export class HomePage implements OnInit, AfterViewInit
 				self.saving = false;
 				return;
 			}
-
-			const blob = new Blob(self.recordedChunks, { type: this.mimeType });
-
-			//generate video url from blob
-			const videoUrl = window.URL.createObjectURL(blob);
-
-			//create a link and associate the video url
-			const link = document.createElement('a');
-			link.href = videoUrl;
-
-			//set the link to be downloadable
-			let fileExtension = '';
-			if (this.mimeType == 'video/mp4' || this.mimeType.startsWith('video/mp4'))
-			{
-				fileExtension = 'mp4';
-			}
-			else if (this.mimeType == 'video/webm')
-			{
-				fileExtension = 'webm';
-			}
-			else
-			{
-				fileExtension = 'err';
-			}
-			link.setAttribute('download', `${self.session}.${fileExtension}`);
-
-			//add the link to the DOM
-			document.body.appendChild(link);
-
-			//click the link
-			link.click();
-
-			self.saving = false;
-			self.presentToast('Recording saved');
+			self.saveRecording();
 		});
 
 		this.mediaRecorder.start();
@@ -367,11 +424,77 @@ export class HomePage implements OnInit, AfterViewInit
 		}
 	}
 
+	async saveRecording()
+	{
+		const blob = new Blob(this.recordedChunks, { type: this.mimeType });
+
+		//set the link to be downloadable
+		let fileExtension = '';
+		if (this.mimeType == 'video/mp4' || this.mimeType.startsWith('video/mp4'))
+		{
+			fileExtension = 'mp4';
+		}
+		else if (this.mimeType == 'video/webm')
+		{
+			fileExtension = 'webm';
+		}
+		else
+		{
+			fileExtension = 'err';
+		}
+
+
+		//make session name a safe directory/filename
+		const sessionSafeName = this.getSafeSessionName();
+
+		const fileCount = this.getSessionFileCount();
+
+		//if native
+		if (Capacitor.isNativePlatform())
+		{
+			const base64String = await this.blobToBase64V2(blob);
+
+			await Filesystem.mkdir({
+				path: environment.productName,
+				directory: Directory.Documents,
+				recursive: true
+			});
+
+			await Filesystem.writeFile({
+				path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.${fileExtension}`,
+				directory: Directory.Documents,
+				data: base64String,
+				recursive: true
+			});
+
+			/** See android documention if implementing for Android:  https://capacitorjs.com/docs/apis/filesystem#mkdiroptions */
+		}
+		else 
+		{
+			//generate video url from blob
+			const videoUrl = window.URL.createObjectURL(blob);
+
+			//create a link and associate the video url
+			const link = document.createElement('a');
+			link.href = videoUrl;
+			link.setAttribute('download', `${sessionSafeName}.${fileCount}.${fileExtension}`);
+
+			//add the link to the DOM
+			document.body.appendChild(link);
+
+			//click the link
+			link.click();
+		}
+
+		this.saving = false;
+		this.presentToast('Recording saved');
+	}
+
 	toggleMute()
 	{
 		if (this.recording)
 		{
-			alert('Cannot mute while recording');
+			this.presentToast('Cannot mute while recording');
 			return;
 		}
 		this.recordAudio = !this.recordAudio;
@@ -380,6 +503,69 @@ export class HomePage implements OnInit, AfterViewInit
 
 		//show iontoast with mute status
 		this.presentToast('Microphone ' + (this.recordAudio ? 'unmuted' : 'muted'));
+	}
+
+	blobToBase64(blob: Blob): Promise<string>
+	{
+		return new Promise((resolve, reject) =>
+		{
+			const reader = new FileReader();
+			reader.onloadend = () =>
+			{
+				if (reader.result)
+				{
+					resolve(reader.result as string);
+				} else
+				{
+					reject(new Error("FileReader failed to convert blob to Base64"));
+				}
+			};
+			reader.onerror = () =>
+			{
+				reject(new Error("FileReader encountered an error"));
+			};
+			reader.readAsDataURL(blob);
+		});
+	}
+
+	private async blobToBase64V2(blob: Blob): Promise<string>
+	{
+		return new Promise((resolve, reject) =>
+		{
+			const reader = new FileReader();
+			reader.onerror = (e) => reject(e);
+			reader.onloadend = (e) =>
+			{
+				const dataUrl = reader.result as string;
+				console.log('dataUrl:', dataUrl);
+				const base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
+				console.log('base64:', base64);
+				resolve(base64);
+			};
+			reader.readAsDataURL(blob);
+		});
+	}
+
+	async base64FromPath(path: string): Promise<string>
+	{
+		const response = await fetch(path);
+		const blob = await response.blob();
+		return new Promise((resolve, reject) =>
+		{
+			const reader = new FileReader();
+			reader.onerror = reject;
+			reader.onload = () =>
+			{
+				if (typeof reader.result === 'string')
+				{
+					resolve(reader.result);
+				} else
+				{
+					reject('method did not return a string');
+				}
+			};
+			reader.readAsDataURL(blob);
+		});
 	}
 
 	async presentToast(message: string)
@@ -395,11 +581,11 @@ export class HomePage implements OnInit, AfterViewInit
 		toast.present();
 	}
 
-	takePhoto()
+	async takePhoto()
 	{
 		if (this.stream == undefined)
 		{
-			alert('Please select a camera first');
+			this.presentToast('Please select a camera first');
 			return;
 		}
 
@@ -410,21 +596,39 @@ export class HomePage implements OnInit, AfterViewInit
 			this.canvas.height = this.height;
 			context.drawImage(this.video, 0, 0, this.width, this.height);
 
-			const data = this.canvas.toDataURL("image/jpeg");
-			this.photo.setAttribute("src", data);
+			const dataUrl = this.canvas.toDataURL("image/jpeg");
+			const base64Data = dataUrl.split(',')[1]; // Extract the Base64 part
 
-			//create a link and associate the video url
-			const link = document.createElement('a');
-			link.href = data;
+			const sessionSafeName = this.getSafeSessionName();
 
-			//set the link to be downloadable
-			link.setAttribute('download', `${this.session}.jpg`);
+			const fileCount = this.getSessionFileCount();
 
-			//add the link to the DOM
-			document.body.appendChild(link);
+			if (Capacitor.isNativePlatform())
+			{
+				await Filesystem.writeFile({
+					path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.jpeg`,
+					directory: Directory.Documents,
+					data: base64Data,
+					recursive: true
+				});
+			}
+			else
+			{
+				this.photo.setAttribute("src", dataUrl);
 
-			//click the link
-			link.click();
+				//create a link and associate the video url
+				const link = document.createElement('a');
+				link.href = dataUrl;
+
+				//set the link to be downloadable
+				link.setAttribute('download', `${sessionSafeName}.${fileCount}.jpeg`);
+
+				//add the link to the DOM
+				document.body.appendChild(link);
+
+				//click the link
+				link.click();
+			}
 
 			this.saving = false;
 			this.presentToast('Image saved');
@@ -479,11 +683,29 @@ export class HomePage implements OnInit, AfterViewInit
 		if (session)
 		{
 			this.session = session.trim();
+			this.resetSessionFileCounter();
 		}
+	}
+
+	sessionFileCounter: number = 0;
+	resetSessionFileCounter() {
+		this.sessionFileCounter = 0;
+	}
+
+	getSessionFileCount(): string
+	{
+		this.sessionFileCounter++;
+		return this.sessionFileCounter.toString().padStart(3, '0');
 	}
 
 	toggleFullscreen()
 	{
+		//if native, toggle zoom
+		if (Capacitor.isNativePlatform())
+		{
+			this.toggleZoom();
+			return;
+		}
 		if (!document.fullscreenElement)
 		{
 			document.documentElement.requestFullscreen();
@@ -494,7 +716,18 @@ export class HomePage implements OnInit, AfterViewInit
 		}
 	}
 
-	checkPermissions() {
-		
+	toggleZoom()
+	{
+		this.zoom = !this.zoom
+	}
+
+	checkPermissions()
+	{
+
+	}
+
+	getSafeSessionName(): string
+	{
+		return this.session.replace(/[^a-z0-9- ]/gi, '_');
 	}
 }
