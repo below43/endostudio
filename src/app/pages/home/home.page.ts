@@ -359,19 +359,31 @@ export class HomePage implements OnInit, AfterViewInit
 			}
 		}, 1000);
 
-		if (MediaRecorder.isTypeSupported('video/mp4'))
+		const supportedMimeTypes = [
+			'video/mp4',
+			'video/webm',
+			'video/ogg',
+			'video/avi',
+			'video/mov'
+		];
+
+		this.mimeType = '';
+
+		for (const mimeType of supportedMimeTypes)
 		{
-			this.mimeType = 'video/mp4';
+			if (MediaRecorder.isTypeSupported(mimeType))
+			{
+				this.mimeType = mimeType;
+				break;
+			}
 		}
-		else if (MediaRecorder.isTypeSupported('video/webm'))
-		{
-			this.mimeType = 'video/webm';
-		}
-		else
+
+		if (!this.mimeType)
 		{
 			this.presentToast('No supported video MIME types found');
 			return;
 		}
+
 		const options = { mimeType: this.mimeType };
 
 		this.presentToast('Recording started');
@@ -379,18 +391,30 @@ export class HomePage implements OnInit, AfterViewInit
 		this.mediaRecorder = new MediaRecorder(this.stream, options);
 
 		var self = this;
-		this.mediaRecorder.addEventListener('dataavailable', function (e)
+
+		this.mediaRecorder.addEventListener('dataavailable', async (e) =>
 		{
-			console.log('data available called');
 			if (e.data.size > 0)
 			{
-				self.recordedChunks.push(e.data);
-			}
+				if (Capacitor.isNativePlatform())
+				{
+					const chunk = e.data;
+					const base64String = await this.blobToBase64(chunk);
+					const sessionSafeName = this.getSafeSessionName();
+					const fileCount = this.getSessionFileCount();
 
-			// if (self.recording === false)
-			// {
-			// 	if (self.mediaRecorder != undefined) self.mediaRecorder.stop();
-			// }
+					await Filesystem.writeFile({
+						path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.${this.mimeType.split('/')[1]}`,
+						directory: Directory.Documents,
+						data: base64String,
+						// encoding: Encoding.UTF8,
+						recursive: true
+					});
+				} else
+				{
+					this.recordedChunks.push(e.data);
+				}
+			}
 		});
 
 		this.mediaRecorder.addEventListener('stop', function ()
@@ -401,8 +425,11 @@ export class HomePage implements OnInit, AfterViewInit
 				console.log('no data to save');
 				self.saving = false;
 				return;
+			}        
+			
+			if (!Capacitor.isNativePlatform()) {
+				self.saveRecording();
 			}
-			self.saveRecording();
 		});
 
 		this.mediaRecorder.start();
@@ -452,7 +479,7 @@ export class HomePage implements OnInit, AfterViewInit
 		//if native
 		if (Capacitor.isNativePlatform())
 		{
-			const base64String = await this.blobToBase64V2(blob);
+			const base64String = await this.blobToBase64(blob);
 
 			await Filesystem.mkdir({
 				path: environment.productName,
@@ -505,30 +532,7 @@ export class HomePage implements OnInit, AfterViewInit
 		this.presentToast('Microphone ' + (this.recordAudio ? 'unmuted' : 'muted'));
 	}
 
-	blobToBase64(blob: Blob): Promise<string>
-	{
-		return new Promise((resolve, reject) =>
-		{
-			const reader = new FileReader();
-			reader.onloadend = () =>
-			{
-				if (reader.result)
-				{
-					resolve(reader.result as string);
-				} else
-				{
-					reject(new Error("FileReader failed to convert blob to Base64"));
-				}
-			};
-			reader.onerror = () =>
-			{
-				reject(new Error("FileReader encountered an error"));
-			};
-			reader.readAsDataURL(blob);
-		});
-	}
-
-	private async blobToBase64V2(blob: Blob): Promise<string>
+	private async blobToBase64(blob: Blob): Promise<string>
 	{
 		return new Promise((resolve, reject) =>
 		{
@@ -537,9 +541,7 @@ export class HomePage implements OnInit, AfterViewInit
 			reader.onloadend = (e) =>
 			{
 				const dataUrl = reader.result as string;
-				console.log('dataUrl:', dataUrl);
 				const base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
-				console.log('base64:', base64);
 				resolve(base64);
 			};
 			reader.readAsDataURL(blob);
@@ -688,7 +690,8 @@ export class HomePage implements OnInit, AfterViewInit
 	}
 
 	sessionFileCounter: number = 0;
-	resetSessionFileCounter() {
+	resetSessionFileCounter()
+	{
 		this.sessionFileCounter = 0;
 	}
 

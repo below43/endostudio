@@ -7,11 +7,9 @@
 		<ion-buttons slot="start">
 		</ion-buttons>
 		<ion-buttons slot="end">
-			<!-- recording time -->
 			<div class="recording-time" *ngIf="recording">
-				Recording: <span class="recording-time-text">{{recordingTime}}</span>
+				<span class="recording-time-text">{{recordingTime}}</span>
 			</div>
-
 			<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving" style="width: 36px" title="Start recording">
 				<ion-icon name="ellipse" style="color:red;  font-size: 0.9em;"></ion-icon>
 			</ion-button>
@@ -93,10 +91,10 @@
 	</div>
 
 	<!-- session name -->
-	<ion-button fill="clear" id="present-session-alert" (click)="isSessionAlertOpen = true"><span class="session" *ngIf="session">{{session}} <ion-icon name="pencil"></ion-icon></span></ion-button>
+	<ion-button fill="clear" *ngIf="!recording" id="present-session-alert" (click)="isSessionAlertOpen = true"><span class="session" *ngIf="session">{{session}} <ion-icon name="pencil"></ion-icon></span></ion-button>
 
 	<!-- camera selector (hidden) -->
-	<div class="camera-selector">
+	<div class="camera-selector" *ngIf="!recording">
 		<ion-select id="ion-select-device" [(ngModel)]="selectedDevice" trigger="select-device" interface="action-sheet" title="Select camera" *ngIf="devices" (ionChange)="deviceSelected($event)" placeholder="Select camera" [disabled]="recording">
 			<ion-select-option *ngFor="let device of devices" [value]="device.deviceId">{{device.label}}</ion-select-option>
 			<ion-select-option value="refresh">Look for another camera...</ion-select-option>

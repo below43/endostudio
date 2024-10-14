@@ -37,14 +37,13 @@
 	bottom: 20px;
 	background-color: rgba(0, 0, 0, 0.5);
 	font-size: 18px;
-    min-height: 60px;
+    min-height: 64px;
     padding: 10px 20px;
 }
 
 .recording-time {
-	font-size: 12px;
-	line-height: 32px;
-	color: var(--ion-color-primary);
+    font-size: 18px;
+    color: var(--ion-color-dark); 
 }
 
 :host ::ng-deep ion-select {
@@ -59,8 +58,9 @@
 	background-color: rgba(0, 0, 0, 0.5);
 	padding: 0;
 	font-size: 18px;
-	min-height: 60px;
+	min-height: 64px;
 	text-transform: initial;
+	margin: 0;
 }
 
 ion-toolbar ion-button:hover {
@@ -139,5 +139,19 @@ ion-title {
 	}
 	span.product-name {
 		margin-left: 40px;
+	}
+}
+
+//on mobile hide #present-session-alert for small mobiles portrait or landscape
+@media (max-width: 768px) {
+	#present-session-alert {
+		display: none;
+	}
+}
+@media (max-width: 1023px) {
+	#touch-take-photo,
+	#touch-start-recording,
+	#touch-stop-recording {
+		display: none;
 	}
 }
