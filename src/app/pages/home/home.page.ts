@@ -9,6 +9,7 @@ import { StorageService } from 'src/services/storage.service';
 import { App } from '@capacitor/app';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { getLocalIsoTimestamp } from 'local-iso-timestamp';
+import { RecordingService } from 'src/app/services/recording.service';
 
 @Component({
 	selector: 'app-home',
@@ -18,7 +19,6 @@ import { getLocalIsoTimestamp } from 'local-iso-timestamp';
 export class HomePage implements OnInit, AfterViewInit
 {
 	@ViewChild('videoElement') videoElement!: ElementRef;
-	mimeType: string = '';
 
 	constructor(
 		private toastController: ToastController,
@@ -26,6 +26,7 @@ export class HomePage implements OnInit, AfterViewInit
 		private filesystemService: FilesystemService,
 		private alertController: AlertController,
 		private storageService: StorageService,
+		private recordingService: RecordingService,
 	) { }
 
 	devices: MediaDeviceInfo[] = [];
@@ -47,6 +48,11 @@ export class HomePage implements OnInit, AfterViewInit
 	{
 		if (this.selectedDevice) this.startCamera();
 		this.initialiseAsync();
+
+		this.recordingService.saving.subscribe(saving =>
+		{
+			this.saving = saving;
+		});
 	}
 
 	async initialiseAsync()
@@ -111,7 +117,6 @@ export class HomePage implements OnInit, AfterViewInit
 		console.log('Local ISO timestamp:', localIsoTimestamp);
 
 		this.session = this.appEnvironment.productName + ' ' + localIsoTimestamp.replace('T', ' ').split('.')[0].split(':')[0] + ':' + localIsoTimestamp.replace('Z', '').split('.')[0].split(':')[1];
-		this.resetSessionFileCounter();
 
 		//initialise the session name input
 		this.sessionAlertInputs = [
@@ -155,16 +160,16 @@ export class HomePage implements OnInit, AfterViewInit
 			{
 				this.selectedDevice = '';
 				this.stopStreamTracks();
+				await this.alertController.create({
+					header: 'No USB camera found',
+					message: 'Please check that you have a USB camera connected and that you have given the app permission to use the camera in the app settings',
+					buttons: ['OK']
+				}).then(alert => alert.present());
 			}
 		}
 		catch (err)
 		{
 			console.error('Error getting USB devices:', err);
-			await this.alertController.create({
-				header: 'No USB camera found',
-				message: 'Please check that you have a USB camera connected and that you have given the app permission to use the camera in the app settings',
-				buttons: ['OK']
-			}).then(alert => alert.present());
 		}
 
 		try
@@ -173,15 +178,18 @@ export class HomePage implements OnInit, AfterViewInit
 			{
 				this.selectedMicrophone = this.audioDevices[0].deviceId;
 			}
+			else 
+			{
+				await this.alertController.create({
+					header: 'No microphone found',
+					message: 'Please check that you have a microphone connected and that you have given the app permission to use the microphone in the app settings',
+					buttons: ['OK']
+				}).then(alert => alert.present());
+			}
 		}
 		catch (err)
 		{
 			console.error('Error getting microphones:', err);
-			await this.alertController.create({
-				header: 'No microphone found',
-				message: 'Please check that you have a microphone connected and that you have given the app permission to use the microphone in the app settings',
-				buttons: ['OK']
-			}).then(alert => alert.present());
 		}
 
 		if (this.selectedDevice)
@@ -209,7 +217,6 @@ export class HomePage implements OnInit, AfterViewInit
 		if (event.detail.value == 'refresh')
 		{
 			this.stopStreamTracks();
-
 			this.getDevices();
 			return;
 		}
@@ -287,44 +294,26 @@ export class HomePage implements OnInit, AfterViewInit
 		console.log('Error: ', error);
 	}
 
-	video: any;
-	canvas: any;
-	photo: any;
 	streaming: boolean = false;
 
 	width: number = 1024;
 	height: number = 768;
 
+	canvas: HTMLCanvasElement | undefined;
+	photo: HTMLImageElement | undefined;
+	video: ElementRef<any> | undefined;
+
 	attachVideo(stream: MediaStream)
 	{
-		this.videoElement.nativeElement.srcObject = stream;
-		this.videoElement.nativeElement.play();
-		this.videoElement.nativeElement.muted = true;
-
+		this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
+		this.photo = document.getElementById('photo') as HTMLImageElement;
 		this.video = this.videoElement.nativeElement;
-		this.canvas = document.getElementById('canvas');
-		this.photo = document.getElementById('photo');
-		this.videoElement.nativeElement.addEventListener(
-			"canplay",
-			(ev: any) =>
-			{
-				if (!this.streaming)
-				{
-					this.height = (this.video.videoHeight / this.video.videoWidth) * this.width;
-					this.canvas.setAttribute("width", this.width);
-					this.canvas.setAttribute("height", this.height);
-					this.streaming = true;
-				}
-			},
-			false,
-		);
-		this.clearphoto();
+
+		this.cameraService.attachVideo(stream, this.videoElement.nativeElement, this.canvas, this.photo, this.width);
 	}
 
 	recording: boolean = false;
 	saving: boolean = false;
-	mediaRecorder: MediaRecorder | undefined;
-	recordedChunks: Blob[] = [];
 	recordAudio: boolean = true;
 	recordingStart: Date | undefined;
 	recordingTime: string = '00:00:00';
@@ -345,7 +334,7 @@ export class HomePage implements OnInit, AfterViewInit
 		var self = this;
 		setInterval(function ()
 		{
-			if (self.recordingStart)
+			if (self.recordingStart && self.recording)
 			{
 				var now = new Date();
 				var diff = now.getTime() - self.recordingStart.getTime();
@@ -359,80 +348,7 @@ export class HomePage implements OnInit, AfterViewInit
 			}
 		}, 1000);
 
-		const supportedMimeTypes = [
-			'video/mp4',
-			'video/webm',
-			'video/ogg',
-			'video/avi',
-			'video/mov'
-		];
-
-		this.mimeType = '';
-
-		for (const mimeType of supportedMimeTypes)
-		{
-			if (MediaRecorder.isTypeSupported(mimeType))
-			{
-				this.mimeType = mimeType;
-				break;
-			}
-		}
-
-		if (!this.mimeType)
-		{
-			this.presentToast('No supported video MIME types found');
-			return;
-		}
-
-		const options = { mimeType: this.mimeType };
-
-		this.presentToast('Recording started');
-		this.recordedChunks = [];
-		this.mediaRecorder = new MediaRecorder(this.stream, options);
-
-		var self = this;
-
-		this.mediaRecorder.addEventListener('dataavailable', async (e) =>
-		{
-			if (e.data.size > 0)
-			{
-				if (Capacitor.isNativePlatform())
-				{
-					const chunk = e.data;
-					const base64String = await this.blobToBase64(chunk);
-					const sessionSafeName = this.getSafeSessionName();
-					const fileCount = this.getSessionFileCount();
-
-					await Filesystem.writeFile({
-						path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.${this.mimeType.split('/')[1]}`,
-						directory: Directory.Documents,
-						data: base64String,
-						// encoding: Encoding.UTF8,
-						recursive: true
-					});
-				} else
-				{
-					this.recordedChunks.push(e.data);
-				}
-			}
-		});
-
-		this.mediaRecorder.addEventListener('stop', function ()
-		{
-			console.log('stop called');
-			if (self.recordedChunks.length == 0)
-			{
-				console.log('no data to save');
-				self.saving = false;
-				return;
-			}        
-			
-			if (!Capacitor.isNativePlatform()) {
-				self.saveRecording();
-			}
-		});
-
-		this.mediaRecorder.start();
+		this.recordingService.startRecording(this.session, this.stream);
 	}
 
 	pad(n: number)
@@ -443,78 +359,7 @@ export class HomePage implements OnInit, AfterViewInit
 	stopRecording()
 	{
 		this.recording = false;
-
-		if (this.mediaRecorder != undefined)
-		{
-			this.saving = true;
-			this.mediaRecorder.stop();
-		}
-	}
-
-	async saveRecording()
-	{
-		const blob = new Blob(this.recordedChunks, { type: this.mimeType });
-
-		//set the link to be downloadable
-		let fileExtension = '';
-		if (this.mimeType == 'video/mp4' || this.mimeType.startsWith('video/mp4'))
-		{
-			fileExtension = 'mp4';
-		}
-		else if (this.mimeType == 'video/webm')
-		{
-			fileExtension = 'webm';
-		}
-		else
-		{
-			fileExtension = 'err';
-		}
-
-
-		//make session name a safe directory/filename
-		const sessionSafeName = this.getSafeSessionName();
-
-		const fileCount = this.getSessionFileCount();
-
-		//if native
-		if (Capacitor.isNativePlatform())
-		{
-			const base64String = await this.blobToBase64(blob);
-
-			await Filesystem.mkdir({
-				path: environment.productName,
-				directory: Directory.Documents,
-				recursive: true
-			});
-
-			await Filesystem.writeFile({
-				path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.${fileExtension}`,
-				directory: Directory.Documents,
-				data: base64String,
-				recursive: true
-			});
-
-			/** See android documention if implementing for Android:  https://capacitorjs.com/docs/apis/filesystem#mkdiroptions */
-		}
-		else 
-		{
-			//generate video url from blob
-			const videoUrl = window.URL.createObjectURL(blob);
-
-			//create a link and associate the video url
-			const link = document.createElement('a');
-			link.href = videoUrl;
-			link.setAttribute('download', `${sessionSafeName}.${fileCount}.${fileExtension}`);
-
-			//add the link to the DOM
-			document.body.appendChild(link);
-
-			//click the link
-			link.click();
-		}
-
-		this.saving = false;
-		this.presentToast('Recording saved');
+		this.recordingService.stopRecording();
 	}
 
 	toggleMute()
@@ -530,44 +375,6 @@ export class HomePage implements OnInit, AfterViewInit
 
 		//show iontoast with mute status
 		this.presentToast('Microphone ' + (this.recordAudio ? 'unmuted' : 'muted'));
-	}
-
-	private async blobToBase64(blob: Blob): Promise<string>
-	{
-		return new Promise((resolve, reject) =>
-		{
-			const reader = new FileReader();
-			reader.onerror = (e) => reject(e);
-			reader.onloadend = (e) =>
-			{
-				const dataUrl = reader.result as string;
-				const base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
-				resolve(base64);
-			};
-			reader.readAsDataURL(blob);
-		});
-	}
-
-	async base64FromPath(path: string): Promise<string>
-	{
-		const response = await fetch(path);
-		const blob = await response.blob();
-		return new Promise((resolve, reject) =>
-		{
-			const reader = new FileReader();
-			reader.onerror = reject;
-			reader.onload = () =>
-			{
-				if (typeof reader.result === 'string')
-				{
-					resolve(reader.result);
-				} else
-				{
-					reject('method did not return a string');
-				}
-			};
-			reader.readAsDataURL(blob);
-		});
 	}
 
 	async presentToast(message: string)
@@ -591,71 +398,18 @@ export class HomePage implements OnInit, AfterViewInit
 			return;
 		}
 
-		const context = this.canvas.getContext("2d");
-		if (this.width && this.height)
+		if (!this.video || !this.canvas || !this.photo)
 		{
-			this.canvas.width = this.width;
-			this.canvas.height = this.height;
-			context.drawImage(this.video, 0, 0, this.width, this.height);
-
-			const dataUrl = this.canvas.toDataURL("image/jpeg");
-			const base64Data = dataUrl.split(',')[1]; // Extract the Base64 part
-
-			const sessionSafeName = this.getSafeSessionName();
-
-			const fileCount = this.getSessionFileCount();
-
-			if (Capacitor.isNativePlatform())
-			{
-				await Filesystem.writeFile({
-					path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.jpeg`,
-					directory: Directory.Documents,
-					data: base64Data,
-					recursive: true
-				});
-			}
-			else
-			{
-				this.photo.setAttribute("src", dataUrl);
-
-				//create a link and associate the video url
-				const link = document.createElement('a');
-				link.href = dataUrl;
-
-				//set the link to be downloadable
-				link.setAttribute('download', `${sessionSafeName}.${fileCount}.jpeg`);
-
-				//add the link to the DOM
-				document.body.appendChild(link);
-
-				//click the link
-				link.click();
-			}
-
-			this.saving = false;
-			this.presentToast('Image saved');
+			this.presentToast('Please select a camera first');
+			return;
 		}
-		else
+		else 
 		{
-			this.clearphoto();
+			this.recordingService.takePhoto(this.stream, this.video, this.canvas, this.photo, this.width, this.height);
 		}
-	}
-
-	clearphoto()
-	{
-		const context = this.canvas.getContext("2d");
-		context.fillStyle = "#AAA";
-		context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-		const data = this.canvas.toDataURL("image/png");
-		this.photo.setAttribute("src", data);
 	}
 
 	session: string = '';
-	setSessionName()
-	{
-
-	}
 
 	public alertButtons = [
 		{
@@ -685,20 +439,8 @@ export class HomePage implements OnInit, AfterViewInit
 		if (session)
 		{
 			this.session = session.trim();
-			this.resetSessionFileCounter();
+			this.recordingService.SetSessionName(this.session);
 		}
-	}
-
-	sessionFileCounter: number = 0;
-	resetSessionFileCounter()
-	{
-		this.sessionFileCounter = 0;
-	}
-
-	getSessionFileCount(): string
-	{
-		this.sessionFileCounter++;
-		return this.sessionFileCounter.toString().padStart(3, '0');
 	}
 
 	toggleFullscreen()
@@ -709,14 +451,8 @@ export class HomePage implements OnInit, AfterViewInit
 			this.toggleZoom();
 			return;
 		}
-		if (!document.fullscreenElement)
-		{
-			document.documentElement.requestFullscreen();
-		}
-		else if (document.exitFullscreen)
-		{
-			document.exitFullscreen();
-		}
+
+		this.cameraService.toggleFullscreen();
 	}
 
 	toggleZoom()
@@ -727,10 +463,5 @@ export class HomePage implements OnInit, AfterViewInit
 	checkPermissions()
 	{
 
-	}
-
-	getSafeSessionName(): string
-	{
-		return this.session.replace(/[^a-z0-9- ]/gi, '_');
 	}
 }

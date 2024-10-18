@@ -57,5 +57,5 @@ To stop CORS errors, add the following environment variable to your dev machine
 
 # iOS Builds
 ```
-ionic capacitor build ios
+ionic build && ionic capacitor build ios
 ```

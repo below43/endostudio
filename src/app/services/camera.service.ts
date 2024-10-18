@@ -10,22 +10,22 @@ export class CameraService
 
 	async getDevices(): Promise<MediaDeviceInfo[]>
 	{
+		let devices;
 		try
 		{
 			await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-			const devices = await navigator.mediaDevices.enumerateDevices();
+			devices = await navigator.mediaDevices.enumerateDevices();
 			console.log('getDevices', devices);
-			return devices;
 		}
 		catch (err)
 		{
 			console.error('Error getting user media:', err);
 			throw err;
 		}
+		return devices;
 	}
 
-	async getUserMedia(constraints: { video: { deviceId: { exact: string; }; }; audio: any; }): Promise<MediaStream>
+	async getUserMedia(constraints: MediaStreamConstraints): Promise<MediaStream>
 	{
 		let stream;
 		try
@@ -34,9 +34,53 @@ export class CameraService
 		}
 		catch (err)
 		{
-			console.error('Error getting user media with constraints:', err);
+			console.error('Error getting user media:', err);
 			throw err;
 		}
 		return stream;
+	}
+
+	public attachVideo(stream: MediaStream, videoElement: HTMLVideoElement, canvas: HTMLCanvasElement, photo: HTMLImageElement, width: number)
+	{
+		videoElement.srcObject = stream;
+		videoElement.play();
+		videoElement.muted = true;
+
+		videoElement.addEventListener(
+			"canplay",
+			() =>
+			{
+				const videoHeight = (videoElement.videoHeight / videoElement.videoWidth) * width;
+				canvas.setAttribute("width", width.toString());
+				canvas.setAttribute("height", videoHeight.toString());
+			},
+			false,
+		);
+
+		this.clearPhoto(canvas, photo);
+	}
+
+	clearPhoto(canvas: HTMLCanvasElement, photo: HTMLImageElement)
+	{
+		const context = canvas.getContext("2d");
+		if (context === null) return;
+
+		context.fillStyle = "#AAA";
+		context.fillRect(0, 0, canvas.width, canvas.height);
+
+		const data = canvas.toDataURL("image/png");
+		photo.setAttribute("src", data);
+	}
+
+	toggleFullscreen()
+	{
+		if (!document.fullscreenElement)
+		{
+			document.documentElement.requestFullscreen();
+		}
+		else if (document.exitFullscreen)
+		{
+			document.exitFullscreen();
+		}
 	}
 }
