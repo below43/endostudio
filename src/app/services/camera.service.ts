@@ -53,8 +53,28 @@ export class CameraService
 				const videoHeight = (videoElement.videoHeight / videoElement.videoWidth) * width;
 				canvas.setAttribute("width", width.toString());
 				canvas.setAttribute("height", videoHeight.toString());
+
+				// Use requestAnimationFrame to keep the video element updated
+				const updateVideo = () => {
+					if (!videoElement.paused && !videoElement.ended) {
+						videoElement.play();
+						requestAnimationFrame(updateVideo);
+					}
+				};
+				requestAnimationFrame(updateVideo);
 			},
 			false,
+		);
+		
+		videoElement.addEventListener(
+			"error",
+			(err) => {
+				console.error("Error with video element:", err);
+				// Try reassigning the srcObject
+				videoElement.srcObject = null;
+				videoElement.srcObject = stream;
+			},
+			false
 		);
 
 		this.clearPhoto(canvas, photo);
