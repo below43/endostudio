@@ -302,11 +302,13 @@ export class HomePage implements OnInit, AfterViewInit
 	canvas: HTMLCanvasElement | undefined;
 	photo: HTMLImageElement | undefined;
 	video: ElementRef<any> | undefined;
+	watermark: HTMLImageElement | undefined;
 
 	attachVideo(stream: MediaStream)
 	{
 		this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
 		this.photo = document.getElementById('photo') as HTMLImageElement;
+		this.watermark = document.getElementById('watermark') as HTMLImageElement;
 		this.video = this.videoElement.nativeElement;
 
 		this.cameraService.attachVideo(stream, this.videoElement.nativeElement, this.canvas, this.photo, this.width);
@@ -398,14 +400,14 @@ export class HomePage implements OnInit, AfterViewInit
 			return;
 		}
 
-		if (!this.video || !this.canvas || !this.photo)
+		if (!this.video || !this.canvas || !this.photo || !this.watermark)
 		{
 			this.presentToast('Please select a camera first');
 			return;
 		}
 		else 
 		{
-			this.recordingService.takePhoto(this.stream, this.video, this.canvas, this.photo, this.width, this.height);
+			this.recordingService.takePhoto(this.stream, this.video, this.canvas, this.photo, this.width, this.height, this.watermark);
 		}
 	}
 

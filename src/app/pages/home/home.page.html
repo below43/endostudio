@@ -71,6 +71,9 @@
 	<!-- video element -->
 	<video #videoElement width="100%" height="100%" [class.zoom]="zoom"></video>
 
+    <!-- watermark -->
+    <canvas #watermarkElement style="display: none;"></canvas>
+
 	<!-- take photo button with white border and white icon -->
 	<ion-button class="touch-button" fill="clear" id="touch-take-photo" (click)="takePhoto()" [disabled]="saving">
 		<ion-icon name="camera-outline" style="color:white"></ion-icon>
@@ -83,11 +86,13 @@
 	<ion-button class="touch-button" fill="clear" id="touch-stop-recording" (click)="stopRecording()" *ngIf="recording" [disabled]="saving">
 		<ion-icon name="stop" style="color:white"></ion-icon>
 	</ion-button>
+	<img id="watermark" src="/assets/watermark.png" width="150" style="position: absolute; top: 80px; right: 10px; width: 150px; opacity: 0.5;" />
 
 	<!-- screen shot -->
 	<canvas id="canvas" style="display:none"></canvas>
 	<div class="output" style="display:none">
 		<img id="photo" alt="The screen capture will appear in this box." style="width: 1024px; height: 1024px;" />
+		<img id="watermark" src="/assets/watermark.png" width="150" style="position: absolute; top: 20px; right: 10px; width: 150px; opacity: 0.5;" />
 	</div>
 
 	<!-- session name -->
