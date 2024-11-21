@@ -49,6 +49,8 @@
 		<string>To display and record video</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>To allow camera to record sound/voice with video</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>To save and access recorded videos and photos</string>
 		<key>UIFileSharingEnabled</key>
 		<true />
 		<key>LSSupportsOpeningDocumentsInPlace</key>
