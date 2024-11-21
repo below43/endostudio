@@ -210,10 +210,9 @@ export class RecordingService
 			canvas.width = width;
 			canvas.height = height;
 			context.drawImage(video, 0, 0, width, height);
-			context.globalAlpha = 0.5; // Set the opacity to 0.5
-			context.drawImage(watermark, 20, 20, watermark.width, watermark.height); // Draw at top left with some padding
-			// context.drawImage(watermark, canvas.width - watermark.width - 10, 18, watermark.width, watermark.height);
-			context.globalAlpha = 1.0; // Reset the opacity to 1.0 for other drawings
+			// context.globalAlpha = 0.5; // Set the opacity to 0.5
+			// context.drawImage(watermark, 20, 20, watermark.width, watermark.height); // Draw at top left with some padding
+			// context.globalAlpha = 1.0; // Reset the opacity to 1.0 for other drawings
 
 			const dataUrl = canvas.toDataURL("image/jpeg");
 			const base64Data = dataUrl.split(',')[1]; // Extract the Base64 part
