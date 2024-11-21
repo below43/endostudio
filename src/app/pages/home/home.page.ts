@@ -466,4 +466,17 @@ export class HomePage implements OnInit, AfterViewInit
 	{
 
 	}
+
+	viewSessionFiles()
+	{
+		//if native
+		if (Capacitor.isNativePlatform())
+		{
+			this.presentToast('To view session files, please use a files app to navigate to the Endo Studio folder');
+			return;
+		}
+
+		//show alert saying the files are in the downloads folder
+		this.presentToast('Files are saved in the downloads folder for this version of the app');
+	}
 }
