@@ -48,7 +48,7 @@
 				<ion-item [button]="true" (click)="isSessionAlertOpen=true" [detail]="false"><ion-label>Set session name</ion-label></ion-item>
 				<ion-item [button]="true" (click)="viewSessionFiles()" [detail]="false"><ion-label>View session files</ion-label></ion-item>
 				<ion-item [button]="true" id="settings-trigger" [detail]="true">Settings...</ion-item>
-				<ion-item [button]="true" (click)="isAboutOpen=true"><ion-label>About</ion-label></ion-item>
+				<ion-item [button]="true" (click)="showAbout()"><ion-label>About</ion-label></ion-item>
 				<!-- settings menu -->
 				<ion-popover trigger="settings-trigger" [dismissOnSelect]="true" side="end">
 					<ng-template>
@@ -116,27 +116,3 @@
 
 <!-- session -->
 <ion-alert [isOpen]="isSessionAlertOpen" mode="md" header="Session name" [buttons]="alertButtons" [inputs]="sessionAlertInputs" (didDismiss)="setSessionNameResult($event)" style="--max-width: 500px; --width: 500px"></ion-alert>
-
-<!-- about -->
-
-<ion-modal #modal [isOpen]="isAboutOpen" expand="block" mode="md">
-	<ng-template>
-		<ion-header>
-			<ion-toolbar>
-				<ion-title>About</ion-title>
-				<ion-buttons slot="end">
-					<ion-button [strong]="true" (click)="modal.dismiss()">Close</ion-button>
-				</ion-buttons>
-			</ion-toolbar>
-		</ion-header>
-		<ion-content class="ion-padding">
-			<h1>About {{appEnvironment.productName}}</h1>
-			<h5>Version {{appVersion}}</h5>
-			<p>{{appEnvironment.productName}} is an app for viewing and recording video input from endoscopes and boroscopes.</p>
-			<p>Powered by <a target="_blank" href="https://github.com/below43/endo-studio">EndoStudio</a>
-				(License: <a target="_blank" href="https://github.com/below43/endostudio/blob/main/LICENSE">MIT</a>)<br />
-				Author: <a target="_blank" href="https://andrew.drake.nz">Andrew Drake</a><br />
-				&copy; Below 43 Ltd (<a target="_blank" href="https://below43.nz">below43.nz</a>) 2023</p>
-		</ion-content>
-	</ng-template>
-</ion-modal>

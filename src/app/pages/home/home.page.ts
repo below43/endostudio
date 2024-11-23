@@ -10,6 +10,7 @@ import { App } from '@capacitor/app';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { getLocalIsoTimestamp } from 'local-iso-timestamp';
 import { RecordingService } from 'src/app/services/recording.service';
+import { Browser } from '@capacitor/browser';
 
 @Component({
 	selector: 'app-home',
@@ -66,38 +67,88 @@ export class HomePage implements OnInit, AfterViewInit
 
 	async showDisclaimerAlert()
 	{
-		const alert = await this.alertController.create({
-			header: 'Disclaimer',
-			message: `${environment.productName} is not intended for medical use. ${environment.creator} is not liable for any misuse of the app, including but not limited to any loss of life or injury resulting from its use. Users are responsible for ensuring that the app is used in a safe and appropriate manner.
-				  <br/><br/>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`,
-			buttons: [
+		let buttons = [
+			{
+				text: 'Disagree',
+				role: 'cancel',
+				handler: async () =>
 				{
-					text: 'Disagree',
-					role: 'cancel',
-					handler: () =>
+
+					await this.storageService.setItem('agreedToTerms', true);
+					//close the app
+					if (Capacitor.isNativePlatform())	
 					{
-						//close the app
-						if (Capacitor.isNativePlatform())	
-						{
-							App.exitApp();
-						}
-						else
-						{
-							//close the browser
-							window.close();
-						}
+						App.exitApp();
 					}
-				},
-				{
-					text: 'Agree',
-					handler: async () =>
+					else
 					{
-						await this.storageService.setItem('agreedToTerms', true);
+						//close the browser
+						window.close();
 					}
 				}
-			]
+			},
+			{
+				text: 'Agree',
+				handler: async () =>
+				{
+					await this.storageService.setItem('agreedToTerms', true);
+				}
+			}
+		];
+
+		const alert = await this.alertController.create({
+			header: 'Disclaimer',
+			message: `${environment.productName} is not intended for medical use.<br/><br/>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`,
+			buttons
 		});
 
+		await alert.present();
+	}
+
+	async showAbout()
+	{
+		let buttons = [
+			{
+				text: 'Privacy Policy',
+				handler: async () =>
+				{
+					await Browser.open({ url: 'https://endostudio.app/support#privacy' });
+				}
+			},
+			{
+				text: 'Terms of Use',
+				handler: async () =>
+				{
+					await Browser.open({ url: 'https://endostudio.app/support#terms' });
+				}
+			},
+			{
+				text: 'EndoStudio on GitHub',
+				handler: async () =>
+				{
+					await Browser.open({ url: 'https://github.com/below43/endostudio/blob/main/LICENSE' });
+				}
+			},
+			{
+				text: 'More about EndoStudio',
+				handler: async () =>
+				{
+					await Browser.open({ url: 'https://endostudio.app' });
+				}
+			}
+		];
+
+		const year = new Date().getFullYear();
+		const about = `
+			<p>${this.appEnvironment.productName} is an app for viewing and capturing video input from endoscopes and boroscopes.</p>
+			<p><b>Version ${this.appVersion}</b></p>
+			<p>Powered by EndoStudio.app</p>`;
+		const alert = await this.alertController.create({
+			header: `About ${this.appEnvironment.productName}`,
+			message: about,
+			buttons,
+			mode: 'ios'
+		});
 		await alert.present();
 	}
 
