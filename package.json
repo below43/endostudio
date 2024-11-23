@@ -75,5 +75,5 @@
   "engines": {
     "node": "22.9.0"
   },
-  "description": "EndoStudio is an app for viewing and recording video input from endoscopes and boroscopes."
+  "description": "EndoStudio is an app for viewing and recording video input from endoscopes and borescopes."
 }

@@ -1,5 +1,5 @@
 # Endo Studio
-EndoStudio is an app for viewing and recording video input from endoscopes and boroscopes.
+EndoStudio is an app for viewing and recording video input from endoscopes and borescopes.
 
 [Website](https://endostudio.app)
 

@@ -140,7 +140,7 @@ export class HomePage implements OnInit, AfterViewInit
 
 		const year = new Date().getFullYear();
 		const about = `
-			<p>${this.appEnvironment.productName} is an app for viewing and capturing video input from endoscopes and boroscopes.</p>
+			<p>${this.appEnvironment.productName} is an app for viewing and capturing video input from endoscopes and borescopes.</p>
 			<p><b>Version ${this.appVersion}</b></p>
 			<p>Powered by EndoStudio.app</p>`;
 		const alert = await this.alertController.create({
