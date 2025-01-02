@@ -11,6 +11,8 @@ import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { getLocalIsoTimestamp } from 'local-iso-timestamp';
 import { RecordingService } from 'src/app/services/recording.service';
 import { Browser } from '@capacitor/browser';
+import { SaveLocation } from 'src/app/services/recording.service';
+import { constants } from 'src/constants';
 
 @Component({
 	selector: 'app-home',
@@ -63,6 +65,23 @@ export class HomePage implements OnInit, AfterViewInit
 		{
 			this.showDisclaimerAlert();
 		}
+
+		this.saveLocation = await this.storageService.getItem('saveLocation');
+		if (this.saveLocation && !Object.values(constants.saveLocations).includes(this.saveLocation))
+		{
+			this.saveLocation = undefined;
+		}
+		if (!this.saveLocation)
+		{
+			if (Capacitor.isNativePlatform()) 
+			{
+				this.saveLocation = constants.saveLocations.cameraRoll;
+			}
+			else
+			{
+				this.saveLocation = constants.saveLocations.downloads;
+			}
+		}
 	}
 
 	async showDisclaimerAlert()
@@ -73,8 +92,7 @@ export class HomePage implements OnInit, AfterViewInit
 				role: 'cancel',
 				handler: async () =>
 				{
-
-					await this.storageService.setItem('agreedToTerms', true);
+					await this.storageService.setItem(constants.settings.agreedToTerms, false);
 					//close the app
 					if (Capacitor.isNativePlatform())	
 					{
@@ -91,7 +109,7 @@ export class HomePage implements OnInit, AfterViewInit
 				text: 'Agree',
 				handler: async () =>
 				{
-					await this.storageService.setItem('agreedToTerms', true);
+					await this.storageService.setItem(constants.settings.agreedToTerms, true);
 				}
 			}
 		];
@@ -530,4 +548,67 @@ export class HomePage implements OnInit, AfterViewInit
 		//show alert saying the files are in the downloads folder
 		this.presentToast('Files are saved in the downloads folder for this version of the app');
 	}
+
+	saveLocation: SaveLocation | undefined = undefined;
+	async setSaveLocation() 
+	{
+		const buttons = [
+			{
+				text: 'Cancel',
+				role: 'cancel',
+				handler: () => { }
+			},
+			{
+				text: 'OK',
+				handler: (data: any) =>
+				{
+					this.saveLocation = data;
+					this.presentToast(`Save location set to ${this.saveLocation?.replace('-', ' ')}`);
+				}
+			}
+		];
+
+		const inputs: AlertInput[] = [
+			{
+				type: 'radio',
+				label: 'Downloads',
+				value: constants.saveLocations.downloads,
+				checked: this.saveLocation === constants.saveLocations.downloads
+			}
+		];
+
+		if (Capacitor.isNativePlatform())
+		{
+			inputs.push(
+				{
+					type: 'radio',
+					label: 'Files',
+					value: constants.saveLocations.files,
+					checked: constants.saveLocations.files === this.saveLocation
+				},
+				{
+					type: 'radio',
+					label: 'Camera Roll',
+					value: constants.saveLocations.cameraRoll,
+					checked: this.saveLocation === constants.saveLocations.cameraRoll
+				}
+			);
+		}
+
+		const alert = await this.alertController.create({
+			header: 'Select save location',
+			inputs,
+			buttons
+		});
+
+		await alert.present();
+
+		const result = await alert.onDidDismiss();
+		if (result.role !== 'cancel')
+		{
+			this.saveLocation = result.data.values;
+			await this.storageService.setItem(constants.settings.saveLocation, this.saveLocation);
+		}
+	}
+
 }

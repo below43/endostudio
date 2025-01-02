@@ -46,7 +46,9 @@
 			<ion-list>
 				<!-- todo: Open media folder -->
 				<ion-item [button]="true" (click)="isSessionAlertOpen=true" [detail]="false"><ion-label>Set session name</ion-label></ion-item>
-				<ion-item [button]="true" (click)="viewSessionFiles()" [detail]="false"><ion-label>View session files</ion-label></ion-item>
+				<ion-item [button]="true" (click)="setSaveLocation()" [detail]="true"><ion-label>Save location</ion-label> 
+					<ion-note slot="end" style="text-transform: capitalize;">{{saveLocation.replace("-", "")}}</ion-note>
+				</ion-item>
 				<ion-item [button]="true" id="settings-trigger" [detail]="true">Settings...</ion-item>
 				<ion-item [button]="true" (click)="showAbout()"><ion-label>About</ion-label></ion-item>
 				<!-- settings menu -->

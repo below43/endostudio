@@ -3,6 +3,9 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { getLocalIsoTimestamp } from 'local-iso-timestamp';
 import { FilesystemService } from './filesystem.service';
+import { constants } from 'src/constants';
+
+export type SaveLocation = typeof constants.saveLocations.files | typeof constants.saveLocations.downloads | typeof constants.saveLocations.cameraRoll;
 
 @Injectable({
 	providedIn: 'root'
