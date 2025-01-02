@@ -5,8 +5,9 @@ PODS:
     - Capacitor
   - CapacitorBrowser (6.0.4):
     - Capacitor
-  - CapacitorCamera (6.0.2):
+  - CapacitorCommunityMedia (5.4.1):
     - Capacitor
+    - SDWebImage
   - CapacitorCordova (6.1.2)
   - CapacitorFilesystem (6.0.1):
     - Capacitor
@@ -16,17 +17,24 @@ PODS:
     - Capacitor
   - CapacitorStatusBar (6.0.1):
     - Capacitor
+  - SDWebImage (5.20.0):
+    - SDWebImage/Core (= 5.20.0)
+  - SDWebImage/Core (5.20.0)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
-  - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
+  - "CapacitorCommunityMedia (from `../../node_modules/@capacitor-community/media`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
+
+SPEC REPOS:
+  trunk:
+    - SDWebImage
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -35,8 +43,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/app"
   CapacitorBrowser:
     :path: "../../node_modules/@capacitor/browser"
-  CapacitorCamera:
-    :path: "../../node_modules/@capacitor/camera"
+  CapacitorCommunityMedia:
+    :path: "../../node_modules/@capacitor-community/media"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorFilesystem:
@@ -52,13 +60,14 @@ SPEC CHECKSUMS:
   Capacitor: 679f9673fdf30597493a6362a5d5bf233d46abc2
   CapacitorApp: 0bc633b4eae40a1f32cd2834788fad3bc42da6a1
   CapacitorBrowser: ef0529d16cd8839281050c350e7bbee4f5c6d65f
-  CapacitorCamera: ed022171dbf3853e68eec877b4d78995378af6b7
+  CapacitorCommunityMedia: 64352c5ccc6024116c37ec7cffc1376c268a9f84
   CapacitorCordova: f48c89f96c319101cd2f0ce8a2b7449b5fb8b3dd
   CapacitorFilesystem: 37fb3aa5c945b4539ab11c74a5c57925a302bf24
   CapacitorHaptics: fe689ade56ef20ec9b041a753c6da70c5d8ec9a9
   CapacitorKeyboard: 2700f9b18687be021e28b5a09b59eb151a46d5e0
   CapacitorStatusBar: b81d4fb5d4e0064c712018071b3ab4b810b39a63
+  SDWebImage: 73c6079366fea25fa4bb9640d5fb58f0893facd8
 
-PODFILE CHECKSUM: 5c07b99d35f8e8b0291a59b6f4fab63e7d77f332
+PODFILE CHECKSUM: 6b7d63bdfc1635d78bbb21fa4c6efe97c484f4e1
 
 COCOAPODS: 1.12.1

@@ -32,6 +32,12 @@
 	<string>To allow the app to record sound alongside of the videos being recorded</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>To save videos and photos that have been recorded in the app</string>
+	<key>NSCameraUsageDescription</key>
+	<string>To allow the app to record videos and take photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>To allow the app to save recordings and photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>To allow the app to save and view recordings and photos.</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

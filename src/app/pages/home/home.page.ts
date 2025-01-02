@@ -568,15 +568,8 @@ export class HomePage implements OnInit, AfterViewInit
 			}
 		];
 
-		const inputs: AlertInput[] = [
-			{
-				type: 'radio',
-				label: 'Downloads',
-				value: constants.saveLocations.downloads,
-				checked: this.saveLocation === constants.saveLocations.downloads
-			}
-		];
-
+		const inputs: AlertInput[] = [];
+		
 		if (Capacitor.isNativePlatform())
 		{
 			inputs.push(
@@ -591,6 +584,17 @@ export class HomePage implements OnInit, AfterViewInit
 					label: 'Camera Roll',
 					value: constants.saveLocations.cameraRoll,
 					checked: this.saveLocation === constants.saveLocations.cameraRoll
+				}
+			);
+		}
+		else 
+		{
+			inputs.push(
+				{
+					type: 'radio',
+					label: 'Downloads',
+					value: constants.saveLocations.downloads,
+					checked: this.saveLocation === constants.saveLocations.downloads
 				}
 			);
 		}

@@ -4,6 +4,8 @@ import { Capacitor } from '@capacitor/core';
 import { getLocalIsoTimestamp } from 'local-iso-timestamp';
 import { FilesystemService } from './filesystem.service';
 import { constants } from 'src/constants';
+import { StorageService } from 'src/services/storage.service';
+import { Media, MediaAlbum, MediaAlbumResponse, MediaSaveOptions } from '@capacitor-community/media';
 
 export type SaveLocation = typeof constants.saveLocations.files | typeof constants.saveLocations.downloads | typeof constants.saveLocations.cameraRoll;
 
@@ -16,10 +18,12 @@ export class RecordingService
 	private mediaRecorder: MediaRecorder | undefined;
 	private recordedChunks: Blob[] = [];
 	private mimeType: string = '';
-	
+
 	public saving = new EventEmitter<boolean>();
-	
-	constructor() { }
+
+	constructor(
+		public storageService: StorageService
+	) { }
 
 	async startRecording(sessionName: string, stream: MediaStream)
 	{
@@ -44,11 +48,13 @@ export class RecordingService
 		this.recordedChunks = [];
 		this.mediaRecorder = new MediaRecorder(stream, options);
 
+		const saveLocation = await this.storageService.getItem(constants.settings.saveLocation) as SaveLocation || constants.saveLocations.files;
+
 		this.mediaRecorder.addEventListener('dataavailable', async (e) =>
 		{
 			if (e.data.size > 0)
 			{
-				if (Capacitor.isNativePlatform())
+				if (Capacitor.isNativePlatform() && saveLocation === constants.saveLocations.files)
 				{
 					const chunk = e.data;
 					const base64String = await this.blobToBase64(chunk);
@@ -76,10 +82,8 @@ export class RecordingService
 				this.saving.next(false);
 				return;
 			}
-			if (!Capacitor.isNativePlatform())
-			{
-				this.saveRecording();
-			}
+			
+			this.saveRecording();
 		});
 
 		this.mediaRecorder.start();
@@ -95,29 +99,40 @@ export class RecordingService
 
 	async saveRecording()
 	{
+		let saveLocation = await this.storageService.getItem(constants.settings.saveLocation) as SaveLocation || constants.saveLocations.files;
+
+		if (!saveLocation) {
+			saveLocation = (Capacitor.isNativePlatform()) ? constants.saveLocations.files : constants.saveLocations.downloads;
+		}
+
+		if (saveLocation === constants.saveLocations.files) {
+			return; // the file should already be there...
+		}
+
+		console.log('saveRecording called', saveLocation);
+		
 		const blob = new Blob(this.recordedChunks, { type: this.mimeType });
 		const sessionSafeName = this.getSafeSessionName();
 		const fileCount = this.getSessionFileCount();
 		const fileExtension = this.mimeType.split('/')[1];
 
-		if (Capacitor.isNativePlatform())
+		switch (saveLocation)
 		{
-			const base64String = await this.blobToBase64(blob);
-			await Filesystem.writeFile({
-				path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.${fileExtension}`,
-				directory: Directory.Documents,
-				data: base64String,
-				recursive: true
-			});
-		}
-		else
-		{
-			const videoUrl = window.URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = videoUrl;
-			link.setAttribute('download', `${sessionSafeName}.${fileCount}.${fileExtension}`);
-			document.body.appendChild(link);
-			link.click();
+			case constants.saveLocations.cameraRoll:
+				const blobUrl = await this.blobToDataUrl(blob);
+				const album = await this.createAlbum();
+				let opts: MediaSaveOptions = { path: blobUrl, albumIdentifier: album?.identifier, fileName: `${sessionSafeName}.${fileCount}.${fileExtension}` };
+				await Media.saveVideo(opts);
+				break;
+			case constants.saveLocations.downloads:
+			default:
+				const videoUrl = window.URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = videoUrl;
+				link.setAttribute('download', `${sessionSafeName}.${fileCount}.${fileExtension}`);
+				document.body.appendChild(link);
+				link.click();
+				break;
 		}
 
 		this.saving.next(false);
@@ -135,6 +150,17 @@ export class RecordingService
 				const base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
 				resolve(base64);
 			};
+			reader.readAsDataURL(blob);
+		});
+	}
+
+	private async blobToDataUrl(blob: Blob): Promise<string>
+	{
+		return new Promise((resolve, reject) =>
+		{
+			const reader = new FileReader();
+			reader.onloadend = () => resolve(reader.result as string);
+			reader.onerror = reject;
 			reader.readAsDataURL(blob);
 		});
 	}
@@ -176,7 +202,8 @@ export class RecordingService
 				await Filesystem.readdir({
 					path: sessionSafeName,
 					directory: Directory.Documents
-				}).then(response => {
+				}).then(response =>
+				{
 					this.sessionFileCounter = response.files.length;
 				});
 			}
@@ -270,4 +297,22 @@ export class RecordingService
 		}
 	}
 
+    async createAlbum(): Promise<MediaAlbum | undefined>
+	{
+		let album = await this.getAlbum();
+        if (!album)
+		{
+			await Media.createAlbum({ name: this.sessionName });
+			album = await this.getAlbum();
+		}
+		return album;
+    }
+
+	async getAlbum(): Promise<MediaAlbum | undefined>
+	{
+		const albums = await Media.getAlbums();
+		const album = albums.albums.find(album => album.name === this.sessionName);
+		console.log('album', album);
+		return album;
+	}
 }
