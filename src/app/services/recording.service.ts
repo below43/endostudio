@@ -27,7 +27,7 @@ export class RecordingService
 
 	async startRecording(sessionName: string, stream: MediaStream)
 	{
-		this.SetSessionName(sessionName);
+		this.setSessionName(sessionName);
 
 		const supportedMimeTypes = [
 			'video/mp4',
@@ -48,7 +48,26 @@ export class RecordingService
 		this.recordedChunks = [];
 		this.mediaRecorder = new MediaRecorder(stream, options);
 
-		const saveLocation = await this.storageService.getItem(constants.settings.saveLocation) as SaveLocation || constants.saveLocations.files;
+		const saveLocation = await this.getSaveLocation();
+		
+		if (saveLocation === constants.saveLocations.files)
+		{
+			//check permissions
+			const permissions = await Filesystem.requestPermissions();
+			if (permissions.publicStorage === 'denied')
+			{
+				throw new Error('Permission denied to save to public storage');
+			}
+		}
+
+		if (Capacitor.isNativePlatform() && saveLocation === constants.saveLocations.cameraRoll)
+		{
+			const album = await this.createAlbum();
+			if (!album)
+			{
+				throw new Error('Permission denied to save to camera roll');
+			}
+		}
 
 		this.mediaRecorder.addEventListener('dataavailable', async (e) =>
 		{
@@ -58,11 +77,9 @@ export class RecordingService
 				{
 					const chunk = e.data;
 					const base64String = await this.blobToBase64(chunk);
-					const sessionSafeName = this.getSafeSessionName();
-					const fileCount = this.getSessionFileCount();
 
 					await Filesystem.writeFile({
-						path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.${this.mimeType.split('/')[1]}`,
+						path: this.getCurrentFileNameAndPath(true),
 						directory: Directory.Documents,
 						data: base64String,
 						recursive: true
@@ -82,7 +99,7 @@ export class RecordingService
 				this.saving.next(false);
 				return;
 			}
-			
+
 			this.saveRecording();
 		});
 
@@ -99,37 +116,35 @@ export class RecordingService
 
 	async saveRecording()
 	{
-		let saveLocation = await this.storageService.getItem(constants.settings.saveLocation) as SaveLocation || constants.saveLocations.files;
+		const saveLocation = await this.getSaveLocation();
 
-		if (!saveLocation) {
-			saveLocation = (Capacitor.isNativePlatform()) ? constants.saveLocations.files : constants.saveLocations.downloads;
-		}
-
-		if (saveLocation === constants.saveLocations.files) {
+		if (saveLocation === constants.saveLocations.files)
+		{
 			return; // the file should already be there...
 		}
 
 		console.log('saveRecording called', saveLocation);
-		
+
 		const blob = new Blob(this.recordedChunks, { type: this.mimeType });
-		const sessionSafeName = this.getSafeSessionName();
-		const fileCount = this.getSessionFileCount();
-		const fileExtension = this.mimeType.split('/')[1];
+		const fileName = this.getCurrentFileName();
 
 		switch (saveLocation)
 		{
 			case constants.saveLocations.cameraRoll:
-				const blobUrl = await this.blobToDataUrl(blob);
+				const path = await this.blobToDataUrl(blob);
 				const album = await this.createAlbum();
-				let opts: MediaSaveOptions = { path: blobUrl, albumIdentifier: album?.identifier, fileName: `${sessionSafeName}.${fileCount}.${fileExtension}` };
+				let opts: MediaSaveOptions = { path, albumIdentifier: album?.identifier, fileName };
 				await Media.saveVideo(opts);
+				break;
+			case constants.saveLocations.files:
+				//do nothing as it should already be saved
 				break;
 			case constants.saveLocations.downloads:
 			default:
 				const videoUrl = window.URL.createObjectURL(blob);
 				const link = document.createElement('a');
 				link.href = videoUrl;
-				link.setAttribute('download', `${sessionSafeName}.${fileCount}.${fileExtension}`);
+				link.setAttribute('download', fileName);
 				document.body.appendChild(link);
 				link.click();
 				break;
@@ -175,7 +190,7 @@ export class RecordingService
 		return this.sessionName.replace(/[^a-z0-9- ]/gi, '_');
 	}
 
-	SetSessionName(sessionName: string)
+	public setSessionName(sessionName: string)
 	{
 		if (this.sessionName != sessionName)
 		{
@@ -183,7 +198,6 @@ export class RecordingService
 			this.resetSessionFileCounter();
 		}
 	}
-
 
 	sessionFileCounter: number = 0;
 	async resetSessionFileCounter(): Promise<void>
@@ -221,10 +235,66 @@ export class RecordingService
 		this.sessionFileCounter = 0;
 	}
 
-	getSessionFileCount(): string
+	private async saveChunkToFileSystem(chunk: Blob)
 	{
-		this.sessionFileCounter++;
+		const data = await this.blobToBase64(chunk);
+		const path = this.getCurrentFileNameAndPath(true);
+
+		await Filesystem.writeFile({
+			path,
+			directory: Directory.Documents,
+			data,
+			recursive: true
+		});
+	}
+
+	private getSessionFileCount(incrementFileCount: boolean = false): string
+	{
+		if (incrementFileCount)
+		{
+			this.sessionFileCounter++;
+		}
 		return this.sessionFileCounter.toString().padStart(3, '0');
+	}
+
+	getCurrentFileNameAndPath(incrementFileCount: boolean = false): string
+	{
+		const sessionSafeName = this.getSafeSessionName();
+		const fileName = this.getCurrentFileName(incrementFileCount);
+		return `${sessionSafeName}/${fileName}`;
+	}
+
+	getCurrentFileName(incrementFileCount: boolean = false): string
+	{
+		const sessionSafeName = this.getSafeSessionName();
+		const fileCount = this.getSessionFileCount(incrementFileCount);
+		return `${sessionSafeName}.${fileCount}.${this.mimeType.split('/')[1]}`;
+	}
+
+	getCurrentImageFileNameAndPath(incrementFileCount: boolean = false): string
+	{
+		const sessionSafeName = this.getSafeSessionName();
+		const fileName = this.getCurrentImageFileName(incrementFileCount);
+		return `${sessionSafeName}/${fileName}`;
+	}
+
+	getCurrentImageFileName(incrementFileCount: boolean = false): string
+	{
+		const sessionSafeName = this.getSafeSessionName();
+		const fileCount = this.getSessionFileCount(incrementFileCount);
+		return `${sessionSafeName}.${fileCount}.jpeg`;
+	}
+
+	public async getSaveLocation(): Promise<SaveLocation>
+	{
+		let saveLocation = await this.storageService.getItem(constants.settings.saveLocation) as SaveLocation || constants.saveLocations.files;
+
+		if (!saveLocation)
+		{
+			saveLocation = (Capacitor.isNativePlatform()) ? constants.saveLocations.files : constants.saveLocations.downloads;
+		}
+
+		return saveLocation;
 	}
 
 	async takePhoto(stream: MediaStream, video: any, canvas: HTMLCanvasElement, photo: HTMLImageElement, width: number, height: number, watermark: HTMLImageElement)
@@ -247,18 +317,29 @@ export class RecordingService
 			const dataUrl = canvas.toDataURL("image/jpeg");
 			const base64Data = dataUrl.split(',')[1]; // Extract the Base64 part
 
-			const sessionSafeName = this.getSafeSessionName();
-			const fileCount = this.getSessionFileCount();
-
 			if (Capacitor.isNativePlatform())
 			{
-				await Filesystem.writeFile({
-					path: `${sessionSafeName}/${sessionSafeName}.${fileCount}.jpeg`,
-					directory: Directory.Documents,
-					data: base64Data,
-					recursive: true
-				});
-			} else
+				const saveLocation = await this.getSaveLocation();
+
+				switch (saveLocation)
+				{
+					case constants.saveLocations.cameraRoll:
+						const album = await this.createAlbum();
+						let opts: MediaSaveOptions = { path: dataUrl, albumIdentifier: album?.identifier };
+						await Media.savePhoto(opts);
+						break;
+					case constants.saveLocations.files:
+						const path = this.getCurrentImageFileNameAndPath(true);
+						await Filesystem.writeFile({
+							path,
+							directory: Directory.Documents,
+							data: base64Data,
+							recursive: true
+						});
+						break;
+				}
+			}
+			else
 			{
 				photo.setAttribute("src", dataUrl);
 
@@ -267,7 +348,8 @@ export class RecordingService
 				link.href = dataUrl;
 
 				// Set the link to be downloadable
-				link.setAttribute('download', `${sessionSafeName}.${fileCount}.jpeg`);
+				const fileName = this.getCurrentImageFileName(true);
+				link.setAttribute('download', fileName);
 
 				// Add the link to the DOM
 				document.body.appendChild(link);
@@ -297,16 +379,16 @@ export class RecordingService
 		}
 	}
 
-    async createAlbum(): Promise<MediaAlbum | undefined>
+	async createAlbum(): Promise<MediaAlbum | undefined>
 	{
 		let album = await this.getAlbum();
-        if (!album)
+		if (!album)
 		{
 			await Media.createAlbum({ name: this.sessionName });
 			album = await this.getAlbum();
 		}
 		return album;
-    }
+	}
 
 	async getAlbum(): Promise<MediaAlbum | undefined>
 	{

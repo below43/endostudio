@@ -419,7 +419,15 @@ export class HomePage implements OnInit, AfterViewInit
 			}
 		}, 1000);
 
-		this.recordingService.startRecording(this.session, this.stream);
+		try
+		{
+			this.recordingService.startRecording(this.session, this.stream);
+		}
+		catch (err)
+		{
+			console.error('Error starting recording:', err);
+			this.presentToast('Error starting recording: ' + err);
+		}
 	}
 
 	pad(n: number)
@@ -429,8 +437,24 @@ export class HomePage implements OnInit, AfterViewInit
 
 	stopRecording()
 	{
-		this.recording = false;
-		this.recordingService.stopRecording();
+		try 
+		{
+			this.recording = false;
+			this.recordingService.stopRecording();
+			this.toastController.create({
+				message: 'Recording saved',
+				duration: 2000,
+				position: 'bottom',
+				mode: 'ios',
+				translucent: true
+			}).then(toast => toast.present());
+		}
+		catch (err)
+		{
+			console.error('Error stopping recording:', err);
+			this.presentToast('Error stopping recording: ' + err);
+		}
+
 	}
 
 	toggleMute()
@@ -476,7 +500,16 @@ export class HomePage implements OnInit, AfterViewInit
 		}
 		else 
 		{
-			this.recordingService.takePhoto(this.stream, this.video, this.canvas, this.photo, this.width, this.height, this.watermark);
+			try
+			{
+				this.recordingService.takePhoto(this.stream, this.video, this.canvas, this.photo, this.width, this.height, this.watermark);
+				this.triggerFlash();
+			}
+			catch (err)
+			{
+				console.error('Error taking photo:', err);
+				this.presentToast('Error taking photo: ' + err);
+			}
 		}
 	}
 
@@ -510,7 +543,7 @@ export class HomePage implements OnInit, AfterViewInit
 		if (session)
 		{
 			this.session = session.trim();
-			this.recordingService.SetSessionName(this.session);
+			this.recordingService.setSessionName(this.session);
 		}
 	}
 
@@ -569,7 +602,7 @@ export class HomePage implements OnInit, AfterViewInit
 		];
 
 		const inputs: AlertInput[] = [];
-		
+
 		if (Capacitor.isNativePlatform())
 		{
 			inputs.push(
@@ -613,6 +646,16 @@ export class HomePage implements OnInit, AfterViewInit
 			this.saveLocation = result.data.values;
 			await this.storageService.setItem(constants.settings.saveLocation, this.saveLocation);
 		}
+	}
+
+	flash: boolean = false;
+	triggerFlash()
+	{
+		this.flash = true;
+		setTimeout(() =>
+		{
+			this.flash = false;
+		}, 500); // Duration of the flash effect
 	}
 
 }

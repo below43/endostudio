@@ -114,6 +114,8 @@
 			<ion-select-option *ngFor="let device of audioDevices" [value]="device.deviceId">{{device.label}}</ion-select-option>
 		</ion-select>
 	</div>
+
+	<div class="flash" *ngIf="flash"></div>
 </ion-content>
 
 <!-- session -->
