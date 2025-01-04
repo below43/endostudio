@@ -3,6 +3,8 @@ EndoStudio is an app for viewing and recording video input from endoscopes and b
 
 [Website](https://endostudio.app)
 
+[iPadOS App](https://apps.apple.com/app/endostudio/id6736820920)
+
 [PWA/Web App](https://web.endostudio.app)
 
 ## Source
