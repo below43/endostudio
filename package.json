@@ -23,7 +23,7 @@
     "@angular/platform-browser-dynamic": "^18.2.7",
     "@angular/router": "^18.2.7",
     "@angular/service-worker": "^18.2.7",
-    "@capacitor-community/media": "^5.4.1",
+    "@capacitor-community/media": "^6.0.0",
     "@capacitor/app": "^6.0.1",
     "@capacitor/browser": "^6.0.4",
     "@capacitor/core": "^6.0.0",

@@ -5,7 +5,7 @@ PODS:
     - Capacitor
   - CapacitorBrowser (6.0.4):
     - Capacitor
-  - CapacitorCommunityMedia (5.4.1):
+  - CapacitorCommunityMedia (6.0.0):
     - Capacitor
     - SDWebImage
   - CapacitorCordova (6.1.2)
@@ -60,7 +60,7 @@ SPEC CHECKSUMS:
   Capacitor: 679f9673fdf30597493a6362a5d5bf233d46abc2
   CapacitorApp: 0bc633b4eae40a1f32cd2834788fad3bc42da6a1
   CapacitorBrowser: ef0529d16cd8839281050c350e7bbee4f5c6d65f
-  CapacitorCommunityMedia: 64352c5ccc6024116c37ec7cffc1376c268a9f84
+  CapacitorCommunityMedia: 51cc6c8782b92cf622d9644cac37ae024fafb377
   CapacitorCordova: f48c89f96c319101cd2f0ce8a2b7449b5fb8b3dd
   CapacitorFilesystem: 37fb3aa5c945b4539ab11c74a5c57925a302bf24
   CapacitorHaptics: fe689ade56ef20ec9b041a753c6da70c5d8ec9a9
