@@ -10,6 +10,12 @@
 			<div class="recording-time" *ngIf="recording">
 				<span class="recording-time-text">{{recordingTime}}</span>
 			</div>
+			<ion-button size="large" (click)="zoomOut()" [disabled]="recording" title="Zoom out">
+				<ion-icon name="remove-outline"></ion-icon>
+			</ion-button>
+			<ion-button size="large" (click)="zoomIn()" [disabled]="recording" title="Zoom in">
+				<ion-icon name="add-outline"></ion-icon>
+			</ion-button>
 			<ion-button size="large" (click)="startRecording()" *ngIf="!recording" [disabled]="saving" style="width: 36px" title="Start recording">
 				<ion-icon name="ellipse" style="color:red;  font-size: 0.9em;"></ion-icon>
 			</ion-button>

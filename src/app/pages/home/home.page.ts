@@ -658,4 +658,13 @@ export class HomePage implements OnInit, AfterViewInit
 		}, 500); // Duration of the flash effect
 	}
 
+	zoomIn()
+	{
+		this.cameraService.zoomIn();
+	}
+
+	zoomOut()
+	{
+		this.cameraService.zoomOut();
+	}
 }
