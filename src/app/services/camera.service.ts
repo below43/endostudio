@@ -6,7 +6,7 @@ import { Injectable } from '@angular/core';
 export class CameraService
 {
 	private currentZoom: number = 1;
-	private minZoom: number = 0.5;
+	private minZoom: number = 1; // Will be dynamically calculated to prevent zooming beyond natural boundaries
 	private maxZoom: number = 3;
 	private zoomStep: number = 0.1;
 	private videoElement: HTMLVideoElement | null = null;
@@ -55,6 +55,11 @@ export class CameraService
 		// Set up zoom controls
 		this.setupZoomControls(videoElement);
 
+		// Recalculate min zoom on window resize
+		window.addEventListener('resize', () => {
+			this.calculateMinZoom();
+		});
+
 		videoElement.addEventListener(
 			"canplay",
 			() =>
@@ -62,6 +67,9 @@ export class CameraService
 				const videoHeight = (videoElement.videoHeight / videoElement.videoWidth) * width;
 				canvas.setAttribute("width", width.toString());
 				canvas.setAttribute("height", videoHeight.toString());
+
+				// Calculate minimum zoom to prevent zooming beyond natural boundaries
+				this.calculateMinZoom();
 
 				// Use requestAnimationFrame to keep the video element updated
 				const updateVideo = () => {
@@ -124,11 +132,9 @@ export class CameraService
 		document.addEventListener('keydown', (event) => {
 			if (event.key === '=' || event.key === '+') {
 				event.preventDefault();
-				this.resetTransformOrigin();
 				this.zoomIn();
 			} else if (event.key === '-') {
 				event.preventDefault();
-				this.resetTransformOrigin();
 				this.zoomOut();
 			}
 		});
@@ -136,17 +142,12 @@ export class CameraService
 		// Touch/pinch zoom controls
 		let initialDistance: number = 0;
 		let initialZoom: number = 1;
-		let pinchCenter: { x: number, y: number } | null = null;
 
 		videoElement.addEventListener('touchstart', (event) => {
 			if (event.touches.length === 2) {
 				event.preventDefault();
 				initialDistance = this.getTouchDistance(event.touches[0], event.touches[1]);
 				initialZoom = this.currentZoom;
-				
-				// Calculate the center point of the pinch gesture
-				pinchCenter = this.getPinchCenter(event.touches[0], event.touches[1], videoElement);
-				this.setTransformOrigin(pinchCenter.x, pinchCenter.y);
 			}
 		});
 
@@ -163,14 +164,12 @@ export class CameraService
 		videoElement.addEventListener('touchend', (event) => {
 			if (event.touches.length < 2) {
 				initialDistance = 0;
-				pinchCenter = null;
 			}
 		});
 
 		// Mouse wheel zoom (optional)
 		videoElement.addEventListener('wheel', (event) => {
 			event.preventDefault();
-			this.resetTransformOrigin();
 			if (event.deltaY < 0) {
 				this.zoomIn();
 			} else {
@@ -186,33 +185,6 @@ export class CameraService
 		return Math.sqrt(dx * dx + dy * dy);
 	}
 
-	private getPinchCenter(touch1: Touch, touch2: Touch, videoElement: HTMLVideoElement): { x: number, y: number }
-	{
-		// Get the center point between the two touches
-		const centerX = (touch1.clientX + touch2.clientX) / 2;
-		const centerY = (touch1.clientY + touch2.clientY) / 2;
-		
-		// Get the video element's bounding rect
-		const rect = videoElement.getBoundingClientRect();
-		
-		// Convert to relative coordinates (0-100% of video element)
-		const relativeX = ((centerX - rect.left) / rect.width) * 100;
-		const relativeY = ((centerY - rect.top) / rect.height) * 100;
-		
-		// Clamp values to prevent going outside the video bounds
-		const clampedX = Math.max(0, Math.min(100, relativeX));
-		const clampedY = Math.max(0, Math.min(100, relativeY));
-		
-		return { x: clampedX, y: clampedY };
-	}
-
-	private setTransformOrigin(x: number, y: number): void
-	{
-		if (this.videoElement) {
-			this.videoElement.style.transformOrigin = `${x}% ${y}%`;
-		}
-	}
-
 	private resetTransformOrigin(): void
 	{
 		if (this.videoElement) {
@@ -220,14 +192,40 @@ export class CameraService
 		}
 	}
 
+	private calculateMinZoom(): void
+	{
+		if (!this.videoElement) return;
+
+		const videoRect = this.videoElement.getBoundingClientRect();
+		const parentElement = this.videoElement.parentElement;
+		
+		if (!parentElement) {
+			this.minZoom = 1;
+			return;
+		}
+
+		const parentRect = parentElement.getBoundingClientRect();
+		
+		// Calculate the minimum scale needed to fill the container
+		// This ensures we never zoom out beyond the natural video boundaries
+		const scaleX = parentRect.width / videoRect.width;
+		const scaleY = parentRect.height / videoRect.height;
+		
+		// Use the larger scale to ensure the video always fills the container
+		this.minZoom = Math.max(scaleX, scaleY, 1);
+		
+		// If current zoom is less than new minimum, adjust it
+		if (this.currentZoom < this.minZoom) {
+			this.currentZoom = this.minZoom;
+			this.applyZoom();
+		}
+	}
+
 	private applyZoom(): void
 	{
 		if (this.videoElement) {
 			this.videoElement.style.transform = `scale(${this.currentZoom})`;
-			// Only set center origin if no specific origin has been set
-			if (!this.videoElement.style.transformOrigin || this.videoElement.style.transformOrigin === 'center center') {
-				this.videoElement.style.transformOrigin = 'center center';
-			}
+			this.videoElement.style.transformOrigin = 'center center';
 		}
 	}
 
@@ -252,7 +250,6 @@ export class CameraService
 	public resetZoom(): void
 	{
 		this.currentZoom = 1;
-		this.resetTransformOrigin();
 		this.applyZoom();
 	}
 
