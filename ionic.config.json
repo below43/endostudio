@@ -1,0 +1,7 @@
+{
+  "name": "EndoStudio",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

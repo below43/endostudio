@@ -1,0 +1,85 @@
+<ion-header [translucent]="true">
+	<ion-toolbar>
+		<ion-title>
+			<!-- <img src="assets/icon/icon.svg" /> -->
+			<span class="product-name">{{appEnvironment.productName}}</span>
+		</ion-title>
+		<ion-buttons slot="start">
+		</ion-buttons>
+		<ion-buttons slot="end">
+			<ion-button size="large" (click)="takePhoto()" title="Take photo">
+				<ion-icon name="camera-outline"></ion-icon>
+			</ion-button>
+			<ion-button size="large" (click)="toggleFullscreen()" [disabled]="recording" title="Toggle fullscreen">
+				<ion-icon name="resize-outline"></ion-icon>
+			</ion-button>
+
+			<!-- <ion-button size="large" (click)="downloadsPopover()" [disabled]="recording" title="Photos and Videos">
+				<ion-icon name="download-outline"></ion-icon>
+			</ion-button> -->
+			<ion-button id="menu-popover-button" [disabled]="recording" title="More...">
+				<ion-icon name="ellipsis-horizontal"></ion-icon>
+			</ion-button>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+<!-- extended menu -->
+<ion-popover trigger="menu-popover-button" [dismissOnSelect]="true" size="auto">
+	<ng-template>
+		<ion-content>
+			<ion-list>
+				<!-- todo: Open media folder -->
+				<ion-item [button]="true" (click)="setSaveLocation()" [detail]="true"><ion-label>Save location</ion-label> 
+					<ion-note slot="end" style="text-transform: capitalize;">{{saveLocation?.replace("-", "")??'-'}}</ion-note>
+				</ion-item>
+				<ion-item [button]="true" id="settings-trigger" [detail]="true">Settings...</ion-item>
+				<ion-item [button]="true" (click)="showAbout()"><ion-label>About</ion-label></ion-item>
+				<!-- settings menu -->
+				<ion-popover trigger="settings-trigger" [dismissOnSelect]="true" side="end">
+					<ng-template>
+						<ion-content>
+							<ion-list>
+								<ion-item [button]="true" id="select-device" (click)="getDevices()"><ion-label>Detect devices</ion-label></ion-item>
+								<ion-item [button]="true" [detail]="false" (click)="selectCamera()"><ion-label>Select camera</ion-label></ion-item>
+							</ion-list>
+						</ion-content>
+					</ng-template>
+				</ion-popover>
+			</ion-list>
+		</ion-content>
+	</ng-template>
+</ion-popover>
+
+<ion-content [fullscreen]="true" style="--background:black">
+	<!-- video element -->
+	<video #videoElement width="100%" height="100%" [class.zoom]="zoom"></video>
+
+    <!-- watermark -->
+    <canvas #watermarkElement style="display: none;"></canvas>
+
+	<!-- take photo button with white border and white icon -->
+	<ion-button class="touch-button" fill="clear" id="touch-take-photo" (click)="takePhoto()" [disabled]="saving">
+		<ion-icon name="camera-outline" style="color:white"></ion-icon>
+	</ion-button>
+
+	<!-- screen shot -->
+	<canvas id="canvas" style="display:none"></canvas>
+	<div class="output" style="display:none">
+		<img id="photo" alt="The screen capture will appear in this box." style="width: 1024px; height: 1024px;" />
+		<img id="watermark" src="/assets/watermark.png" width="155" height="28" style="opacity: 0; position: absolute; top: 20px; right: 10px; width: 155px; height: 28px;" />
+	</div>
+
+	<!-- camera selector (hidden) -->
+	<div class="camera-selector" *ngIf="!recording">
+		<ion-select id="ion-select-device" [(ngModel)]="selectedDevice" trigger="select-device" interface="action-sheet" title="Select camera" *ngIf="devices" (ionChange)="deviceSelected($event)" placeholder="Select camera" [disabled]="recording">
+			<ion-select-option *ngFor="let device of devices" [value]="device.deviceId">{{device.label}}</ion-select-option>
+			<ion-select-option value="refresh">Look for another camera...</ion-select-option>
+		</ion-select>
+	</div>
+
+	<div class="flash" *ngIf="flash"></div>
+</ion-content>
+
+<!-- session -->
+<ion-alert [isOpen]="isSessionAlertOpen" mode="md" header="Session name" [buttons]="alertButtons" [inputs]="sessionAlertInputs" (didDismiss)="setSessionNameResult($event)" style="--max-width: 500px; --width: 500px"></ion-alert>
